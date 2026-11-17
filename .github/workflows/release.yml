@@ -1,0 +1,64 @@
+# The release of the sideloading IPA: pushing a version tag builds an IPA, signed ad hoc only, on
+# macOS and creates the GitHub release with it, to be installed with SideStore (docs/sideload.md). This file
+# holds all of the fork's releasing. By hand: scripts/sideload/build-ipa.sh, then gh release create
+# with the IPA.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  # Builds the IPA from the tag, with neither a secret nor a token that can write: building runs
+  # the project's code and its dependencies'. The fork has no tests of its own to run first.
+  build:
+    runs-on: macos-26
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The Metal shaders need Xcode's Metal Toolchain, a separate download.
+      - name: Install the Metal Toolchain
+        run: |
+          xcodebuild -version
+          if ! xcodebuild -showComponent MetalToolchain 2>/dev/null | grep -q 'Status: installed'; then
+            xcodebuild -downloadComponent MetalToolchain
+          fi
+
+      # The IPA is named rootshell-<version>-ios.ipa, the version being the tag without its v.
+      - name: Build the IPA
+        env:
+          TAG: ${{ github.ref_name }}
+        run: scripts/sideload/build-ipa.sh "$RUNNER_TEMP/derived" "dist/rootshell-${TAG#v}-ios.ipa"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-ios
+          path: dist/
+          if-no-files-found: error
+
+  # Creates the release from the IPA build made, and runs none of the project's code.
+  github-release:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist/
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" dist/* -R "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --generate-notes
