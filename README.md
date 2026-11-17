@@ -311,6 +311,10 @@ Building rootshell requires:
   [docs/old-xcode-compat.md](docs/old-xcode-compat.md)
 - An Apple Silicon Mac for iOS Simulator builds
 
+This fork is installed on iPhone and iPad with SideStore: each release carries a
+`rootshell-<version>-ios.ipa` signed ad hoc only, built without iCloud sync, push or VPN, which a free Apple ID cannot sign. See
+[docs/sideload.md](docs/sideload.md).
+
 Clone the repository, open `rootshell.xcodeproj` in Xcode, and let Swift Package Manager resolve the project dependencies:
 
 ```bash
