@@ -306,7 +306,7 @@ rootshell collects no analytics or crash data unless otherwise part of the TestF
 Building rootshell requires:
 
 - iOS/iPadOS 18.0+, macOS 14.0+, or visionOS 26.0+
-- Xcode 26.4+
+- Xcode 27.1+ (the iOS 27.1 SDK)
 - An Apple Silicon Mac for iOS Simulator builds
 
 Clone the repository, open `rootshell.xcodeproj` in Xcode, and let Swift Package Manager resolve the project dependencies:
