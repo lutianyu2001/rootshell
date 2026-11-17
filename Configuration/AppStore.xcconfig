@@ -17,7 +17,10 @@ EXCLUDED_SOURCE_FILE_NAMES = rootshell-helper.app UpdateManager.swift rootshellv
 // Swift conditional compilation flag
 // Keep aligned with the pinned YubiKit fork release. Restoring Lightning requires
 // a new package release plus UISupportedExternalAccessoryProtocols in Info.plist.
-OTHER_SWIFT_FLAGS = $(inherited) -D APPSTORE -D DISABLE_MFI_LIGHTNING
+// SIDELOAD: this fork's builds are installed with SideStore under a free
+// Apple ID, which signs without iCloud, push, VPN or associated domains.
+// See docs/sideload.md.
+OTHER_SWIFT_FLAGS = $(inherited) -D APPSTORE -D DISABLE_MFI_LIGHTNING -D SIDELOAD
 
 // Carbon is linked on Mac Catalyst for the TIS (Text Input Sources) entry
 // points used by Mod-Tap input-source switching. The Carbon umbrella header

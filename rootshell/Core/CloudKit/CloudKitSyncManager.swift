@@ -605,6 +605,14 @@ final class CloudKitSyncManager {
     /// Enable or disable sync
     func setEnabled(_ enabled: Bool) async throws {
         guard enabled != isSyncEnabled else { return }
+        #if SIDELOAD
+        // A sideloaded build is signed without the iCloud entitlement, and
+        // creating the CloudKit container traps without it.
+        if enabled {
+            syncState = .error(.accountNotAvailable)
+            throw CloudKitSyncError.accountNotAvailable
+        }
+        #endif
 
         if enabled {
             syncState = .checkingAccount
@@ -1640,7 +1648,11 @@ final class CloudKitSyncManager {
     private var pendingInitialPushTypes: Set<String> = []
 
     private func loadSettings() {
+        #if SIDELOAD
+        isSyncEnabled = false
+        #else
         isSyncEnabled = UserDefaults.standard.bool(forKey: CloudKitSyncSettings.enabledKey)
+        #endif
         isHistorySyncEnabled = UserDefaults.standard.bool(forKey: CloudKitSyncSettings.syncHistoryKey)
         isKnownHostsSyncEnabled = UserDefaults.standard.bool(forKey: CloudKitSyncSettings.syncKnownHostsKey)
         lastSyncDate = UserDefaults.standard.object(forKey: CloudKitSyncSettings.lastSyncDateKey) as? Date
