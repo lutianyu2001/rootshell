@@ -44,6 +44,9 @@ final class TerminalReconnectionController {
             self.manager = manager
         }
         let configuredSessionID = ObjectIdentifier(session as AnyObject)
+        // Mosh and tssh can resume the remote PTY, whose programs keep the
+        // modes they set. Every other session reconnects to a fresh shell.
+        let reconnectStartsFreshShell = !(session is MoshSession || session is TrzszSession)
 
         manager.onReconnectAttempt = { [weak self] in
             self?.host?.terminalSessionWillChange()
@@ -70,6 +73,13 @@ final class TerminalReconnectionController {
                 return
             }
             Ghostty.logger.info("Session disconnected: \(reason.description)")
+            // The programs that set mouse reporting and the like are gone,
+            // but the terminal keeps those modes: a mouse move would then
+            // send reports that the reconnected shell prints as raw escape
+            // sequences. Reset them before the reconnect messages are drawn.
+            if reconnectStartsFreshShell {
+                self.host?.terminalResetRemoteInputModes()
+            }
             self.host?.terminalSessionWillChange()
             self.manager?.handleDisconnect(reason: reason)
         }

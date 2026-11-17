@@ -341,6 +341,32 @@ extension Ghostty.TerminalView {
         writeToGhostty(string: string)
     }
 
+    func terminalResetRemoteInputModes() {
+        // The keyboard protocol stack is kept per screen, so clear the
+        // current one, then the primary one after leaving the alternate screen.
+        var reset = Self.remoteInputModesReset + "\u{1b}[<8u"
+        if let surface, ghostty_surface_is_alternate_active(surface) {
+            reset += "\u{1b}[?1049l\u{1b}[<8u"
+        }
+        reset += "\u{1b}[?25h\u{1b}[0m\u{1b}[0 q"
+        outputPipeline.writeDirect(reset)
+        // Ghostty applies the bytes when the writer drains; sync the cached
+        // mouse-capture flag only after that.
+        outputPipeline.notifyWhenOutputDrained { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.updateMouseCaptureState()
+            }
+        }
+    }
+
+    /// DECRST for every mouse tracking mode and extended encoding, focus
+    /// reporting, bracketed paste, application cursor keys and keypad, and
+    /// xterm's modifyOtherKeys.
+    private static let remoteInputModesReset =
+        "\u{1b}[?1000l\u{1b}[?1001l\u{1b}[?1002l\u{1b}[?1003l"
+        + "\u{1b}[?1005l\u{1b}[?1006l\u{1b}[?1015l\u{1b}[?1016l"
+        + "\u{1b}[?1004l\u{1b}[?2004l\u{1b}[?1l\u{1b}>\u{1b}[>4;0m"
+
     func terminalApplyResumeTrailer(for session: TrzszSession) {
         applyResumeTrailer(for: session)
     }

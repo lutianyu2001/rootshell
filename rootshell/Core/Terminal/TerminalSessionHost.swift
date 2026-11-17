@@ -95,6 +95,10 @@ protocol TerminalSessionControllerHost: TerminalSessionHost, TerminalResponsePip
     func terminalProgressReset()
     func terminalRestoreScrollbackAfterAnimation()
     func terminalWriteToGhostty(_ string: String)
+    /// Turns off the input reporting a remote program negotiated (mouse,
+    /// focus, bracketed paste, keyboard protocols) and leaves its alternate
+    /// screen, for a disconnect whose reconnect starts a fresh remote shell.
+    func terminalResetRemoteInputModes()
     func terminalApplyResumeTrailer(for session: TrzszSession)
     func terminalHandleEmbeddedTrzszFailedBeforeRunning()
     func terminalRemoveAwaitingTmuxPlaceholders()
