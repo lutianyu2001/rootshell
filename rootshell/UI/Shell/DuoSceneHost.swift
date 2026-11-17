@@ -39,11 +39,14 @@ struct DuoSceneHost<Content: View>: View {
 
     var body: some View {
         #if !targetEnvironment(macCatalyst) && !os(visionOS)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *), UIDevice.current.userInterfaceIdiom == .phone {
             NavigationStack {
                 DuoSceneContext(content: content)
             }
-        } else {
+        }
+#endif
+        do {
             content()
         }
         #else
@@ -53,6 +56,7 @@ struct DuoSceneHost<Content: View>: View {
 }
 
 #if !targetEnvironment(macCatalyst) && !os(visionOS)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
 @available(iOS 27.1, *)
 private struct DuoSceneContext<Content: View>: View {
     @Environment(\.toolbarVerticalEdge) private var verticalEdge
@@ -106,6 +110,7 @@ private struct DuoSceneContext<Content: View>: View {
     }
 }
 #endif
+#endif
 
 struct DuoWorkspaceGeometry<Content: View>: View {
     let context: DuoLayoutContext
@@ -137,6 +142,7 @@ struct DuoWorkspaceGeometry<Content: View>: View {
         var occlusionContentFrames: [CGRect] = []
         var divisions: [CGRect] = []
         #if !targetEnvironment(macCatalyst) && !os(visionOS)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *) {
             let regions = expanded.reservedRegions(kind: .occlusion, layoutDirectionBehavior: .fixed)
             occlusions = regions.map(\.frame)
@@ -151,6 +157,7 @@ struct DuoWorkspaceGeometry<Content: View>: View {
             }
             divisions = expanded.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed).map(\.frame)
         }
+#endif
         #endif
         var layout = DuoWorkspaceLayout.resolve(
             bounds: CGRect(origin: .zero, size: expanded.size), safeFrame: safeFrame,
@@ -179,11 +186,13 @@ struct DuoControlClearance: ViewModifier {
 
     private func clearance(in proxy: GeometryProxy) -> CGFloat {
         #if !targetEnvironment(macCatalyst) && !os(visionOS)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *), layout.usesFullWidth {
             return max(0, proxy.reservedRegions(kind: .occlusion).filter {
                 $0.frame.intersects(CGRect(origin: .zero, size: proxy.size))
             }.map(\.frame.maxY).max() ?? 0)
         }
+#endif
         #endif
         return 0
     }

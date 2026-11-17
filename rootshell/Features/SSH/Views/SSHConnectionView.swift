@@ -490,7 +490,7 @@ struct SSHConnectionView: View {
         #endif
     }
     
-    private var navigationStackContent: some View {
+    private var navigationStackContentA: some View {
         connectionContent
             .background(sheetThemeColors?.background ?? Color(.systemGroupedBackground))
             .onChange(of: quickConnectText) { _, newValue in
@@ -498,6 +498,10 @@ struct SSHConnectionView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { connectionToolbar }
+    }
+
+    private var navigationStackContentB: some View {
+        navigationStackContentA
             .onChange(of: jumpHops.isEmpty) { _, isEmpty in
                 if !isEmpty {
                     isJumpHostExpanded = true
@@ -542,6 +546,10 @@ struct SSHConnectionView: View {
                 }
                 carryEndpointBetweenTabs(from: oldType, to: newType)
             }
+    }
+
+    private var navigationStackContent: some View {
+        navigationStackContentB
             .onAppear(perform: handleConnectionViewAppear)
             .task { await handleConnectionViewTask() }
             .onChange(of: cloudAccountManager.accounts) { _, _ in

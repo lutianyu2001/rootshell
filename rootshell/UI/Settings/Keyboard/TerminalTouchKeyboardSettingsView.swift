@@ -32,7 +32,9 @@ struct TerminalTouchKeyboardSettingsView: View {
     }
 
     private var showsDuoHeights: Bool {
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *) { return duoLayout.hasHinge }
+#endif
         return false
     }
 

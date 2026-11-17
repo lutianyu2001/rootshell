@@ -515,6 +515,7 @@ struct WindowSettingsView: View {
             }
 
             #if os(iOS) && !targetEnvironment(macCatalyst)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
             if #available(iOS 27.1, *), duoLayout.hasHinge {
                 Section {
                     Picker(selection: $duoFrontDisplayMode) {
@@ -544,6 +545,7 @@ struct WindowSettingsView: View {
                         .font(.caption)
                 }
             }
+#endif
             #endif
 
             #if targetEnvironment(macCatalyst)

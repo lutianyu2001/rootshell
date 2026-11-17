@@ -348,14 +348,18 @@ final class TerminalFloatingKeyboardOverlay: UIView {
         root.addChild(host)
         host.didMove(toParent: root)
         presentationHost = host
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *) { root.setNeedsUpdateOfVerticalBarConfiguration() }
+#endif
     }
 
     func detach() {
         if let host = presentationHost, let root = host.parent {
             host.willMove(toParent: nil)
             host.removeFromParent()
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
             if #available(iOS 27.1, *) { root.setNeedsUpdateOfVerticalBarConfiguration() }
+#endif
         }
         // UIKit may already have mounted the compact toolbar host. A stale
         // overlay must not remove the keyboard from its new container.
@@ -373,12 +377,14 @@ final class TerminalFloatingKeyboardOverlay: UIView {
 /// Presents the card's menus. As the root's newest child it also becomes the one
 /// the root asks about the vertical bar, so it passes on the app content's answer.
 private final class TerminalFloatingKeyboardPresentationHost: UIViewController {
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
     @available(iOS 27.1, *)
     override var preferredVerticalBarBehavior: UIVerticalBarBehavior {
         var content = parent?.children.first { $0 !== self }
         while let child = content?.childForPreferredVerticalBarBehavior { content = child }
         return content?.preferredVerticalBarBehavior ?? .automatic
     }
+#endif
 }
 
 #endif
