@@ -38,6 +38,12 @@ class SwiftUIBannerHostView<Content: View>: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // Swift 6.2 (Xcode 26.3) crashes in its inliner when it optimizes this
+    // generic class's implicit deinit in a release build; see
+    // docs/old-xcode-compat.md.
+    @_optimize(none)
+    deinit {}
+
     // MARK: - Parent
 
     /// Sets (or re-homes to) the parent view controller. An existing hosting

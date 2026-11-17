@@ -40,6 +40,14 @@ Each item was a compile or launch failure with the versions above.
 - **Type-checking time.** Swift 6.2 gives up on the long modifier chain of
   `SSHConnectionView.navigationStackContent` ("unable to type-check this
   expression in reasonable time"). It is split into three properties.
+- **Optimizer crash.** In a release build (`scripts/sideload/build-ipa.sh`), Swift
+  6.2's EarlyPerfInliner crashes on the implicit deinit of the generic
+  `SwiftUIBannerHostView` ("While running pass ... EarlyPerfInliner on
+  SILFunction ...SwiftUIBannerHostViewCfD"). The class has an explicit
+  `@_optimize(none) deinit {}`. Debug builds do not optimize and never hit it.
+  The release build's whole-module optimization then runs as one compiler
+  process for tens of minutes with no output; it is not stuck while that
+  process uses CPU.
 - **Metal Toolchain.** Xcode 26.3 does not ship the Metal compiler; the build
   fails with "cannot execute tool 'metal' due to missing Metal Toolchain".
   Install it once with `xcodebuild -downloadComponent MetalToolchain` (about
