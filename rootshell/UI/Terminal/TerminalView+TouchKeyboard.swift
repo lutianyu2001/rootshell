@@ -47,8 +47,7 @@ extension Ghostty.TerminalView: TerminalTouchKeyboardHost {
             "\u{1b}[5~": .keyboardPageUp, "\u{1b}[6~": .keyboardPageDown,
             "\u{1b}[3~": .keyboardDeleteForward
         ]
-        let functionNumber = key.hasPrefix("F") ? Int(key.dropFirst()) : nil
-        let functionUsage = functionNumber.flatMap { (1...12).contains($0) ? UIKeyboardHIDUsage(rawValue: UIKeyboardHIDUsage.keyboardF1.rawValue + $0 - 1) : nil }
+        let functionUsage = KeyID.functionKeyNumber(key).flatMap(Self.functionKeyHIDUsage)
         if let usage = special[key] ?? functionUsage {
             var flags: UIKeyModifierFlags = []
             if modifiers.contains(.control) { flags.insert(.control) }
@@ -62,14 +61,9 @@ extension Ghostty.TerminalView: TerminalTouchKeyboardHost {
                 return
             }
         }
-        if let index = functionNumber, (1...12).contains(index) {
-            let fallback = ["\u{1b}OP", "\u{1b}OQ", "\u{1b}OR", "\u{1b}OS", "\u{1b}[15~", "\u{1b}[17~",
-                            "\u{1b}[18~", "\u{1b}[19~", "\u{1b}[20~", "\u{1b}[21~", "\u{1b}[23~", "\u{1b}[24~"]
-            keyPressed(fallback[index - 1], modifiers: modifiers)
-        } else {
-            // This path also preserves local-shell Ctrl-C and Escape overlays.
-            keyPressed(key, modifiers: modifiers, shifted: shifted)
-        }
+        // This path also preserves local-shell Ctrl-C and Escape overlays,
+        // and encodes F1-F12 itself when Ghostty can't.
+        keyPressed(key, modifiers: modifiers, shifted: shifted)
     }
 
     var touchKeyboardSuggestionContext: TerminalTouchKeyboardModel.SuggestionContext? {

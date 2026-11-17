@@ -202,6 +202,9 @@ class QuickConnectTextField: UITextField, KeyboardButtonDelegate {
             return
         }
 
+        // Function keys arrive by name ("F1"); they mean nothing in a text field.
+        if KeyID.functionKeyNumber(key) != nil { return }
+
         // Handle other keys by inserting text
         // Note: Modifiers from toolbar buttons are already included in the 'modifiers' parameter
         // For QuickConnectField, we typically don't need control sequences, so just insert the key

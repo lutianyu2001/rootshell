@@ -61,6 +61,9 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
     case ampersand
     case asterisk
 
+    // Function keys (12)
+    case f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12
+
     // Actions (11)
     case dismiss
     case tabSwitcher
@@ -133,6 +136,7 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
         case .percent: return String(localized: "Percent %")
         case .ampersand: return String(localized: "Ampersand &")
         case .asterisk: return String(localized: "Asterisk *")
+        case .f1, .f2, .f3, .f4, .f5, .f6, .f7, .f8, .f9, .f10, .f11, .f12: return keyValue
         case .dismiss: return String(localized: "Dismiss Keyboard")
         case .tabSwitcher: return String(localized: "Tab Switcher")
         case .compose: return String(localized: "Compose")
@@ -240,6 +244,18 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
         case .percent: return "%"
         case .ampersand: return "&"
         case .asterisk: return "*"
+        case .f1: return "F1"
+        case .f2: return "F2"
+        case .f3: return "F3"
+        case .f4: return "F4"
+        case .f5: return "F5"
+        case .f6: return "F6"
+        case .f7: return "F7"
+        case .f8: return "F8"
+        case .f9: return "F9"
+        case .f10: return "F10"
+        case .f11: return "F11"
+        case .f12: return "F12"
         case .dismiss: return "__dismiss__"
         case .tabSwitcher: return "__tabswitcher__"
         case .compose: return "__compose__"
@@ -299,7 +315,7 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
         case .dictation: return .dictation
         case .drawerToggle: return .extraKeysDrawerToggle
         default:
-            // All symbol keys use single-text display
+            // Symbol and function keys use single-text display
             return .text(keyValue)
         }
     }
@@ -337,12 +353,21 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
              .toggleMouseCapture, .aiAgent, .brightnessBoost, .typePassword, .clipboardManager, .fileManager, .httpCapture, .dictation,
              .choosePaneToZoom, .togglePaneZoom: return .action
         case .drawerToggle: return .toggle
+        case .f1, .f2, .f3, .f4, .f5, .f6, .f7, .f8, .f9, .f10, .f11, .f12: return .function
         default: return .symbol
         }
     }
 
     enum KeyCategory: String, Sendable {
-        case modifier, special, navigation, symbol, action, toggle
+        case modifier, special, navigation, symbol, function, action, toggle
+    }
+
+    /// 1 through 12 for a function key name ("F1" … "F12"), the value the
+    /// toolbar and the touch keyboard send for these keys; nil otherwise.
+    static func functionKeyNumber(_ key: String) -> Int? {
+        guard key.hasPrefix("F"), let number = Int(key.dropFirst()), (1...12).contains(number),
+              key == "F\(number)" else { return nil }
+        return number
     }
 }
 
@@ -394,7 +419,7 @@ struct ToolbarLayoutConfig: Equatable, Sendable {
 
     // MARK: - Defaults
 
-    static let currentVersion = 19
+    static let currentVersion = 20
 
     static func defaultConfig(for idiom: UIUserInterfaceIdiom) -> ToolbarLayoutConfig {
         switch idiom {
@@ -450,6 +475,18 @@ struct ToolbarLayoutConfig: Equatable, Sendable {
             .builtIn(.greaterThan),
             .builtIn(.ampersand),
             .builtIn(.asterisk),
+            .builtIn(.f1),
+            .builtIn(.f2),
+            .builtIn(.f3),
+            .builtIn(.f4),
+            .builtIn(.f5),
+            .builtIn(.f6),
+            .builtIn(.f7),
+            .builtIn(.f8),
+            .builtIn(.f9),
+            .builtIn(.f10),
+            .builtIn(.f11),
+            .builtIn(.f12),
             .builtIn(.paste),
             .builtIn(.compose),
             .builtIn(.voiceAgent),
@@ -507,6 +544,18 @@ struct ToolbarLayoutConfig: Equatable, Sendable {
             .builtIn(.percent),
             .builtIn(.ampersand),
             .builtIn(.asterisk),
+            .builtIn(.f1),
+            .builtIn(.f2),
+            .builtIn(.f3),
+            .builtIn(.f4),
+            .builtIn(.f5),
+            .builtIn(.f6),
+            .builtIn(.f7),
+            .builtIn(.f8),
+            .builtIn(.f9),
+            .builtIn(.f10),
+            .builtIn(.f11),
+            .builtIn(.f12),
             .builtIn(.paste),
             .builtIn(.compose),
             .builtIn(.voiceAgent),

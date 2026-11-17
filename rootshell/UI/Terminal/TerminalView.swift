@@ -96,6 +96,28 @@ extension Ghostty {
             HardwareKeyboardText.shiftedCharacter(char)
         }
 
+        /// HID usage of function key `number` (1 through 12).
+        static func functionKeyHIDUsage(_ number: Int) -> UIKeyboardHIDUsage? {
+            guard (1...12).contains(number) else { return nil }
+            return UIKeyboardHIDUsage(rawValue: UIKeyboardHIDUsage.keyboardF1.rawValue + number - 1)
+        }
+
+        /// xterm sequence for function key `number` (1 through 12): SS3 P-S or
+        /// CSI n ~ unmodified, CSI 1;{param}P-S or CSI n;{param}~ modified, where
+        /// param = 1 + Shift(1) + Alt(2) + Ctrl(4) and Cmd maps to the Alt bit.
+        static func functionKeySequence(_ number: Int, modifiers: KeyModifiers) -> String {
+            var param = 1
+            if modifiers.contains(.shift) { param += 1 }
+            if modifiers.contains(.alt) || modifiers.contains(.command) { param += 2 }
+            if modifiers.contains(.control) { param += 4 }
+            if number <= 4 {
+                let finalByte = ["P", "Q", "R", "S"][number - 1]
+                return param == 1 ? "\u{1B}O\(finalByte)" : "\u{1B}[1;\(param)\(finalByte)"
+            }
+            let code = [15, 17, 18, 19, 20, 21, 23, 24][number - 5]
+            return param == 1 ? "\u{1B}[\(code)~" : "\u{1B}[\(code);\(param)~"
+        }
+
         /// Navigation keys whose modified forms need Ghostty's encoder.
         /// Arrows keep their own path so Cmd still maps to the Alt bit.
         static let navigationKeyHIDUsageMap: [String: UIKeyboardHIDUsage] = [
@@ -6103,6 +6125,21 @@ extension Ghostty.TerminalView: KeyboardButtonDelegate {
                 _ = sendKeyViaGhostty(keyCode: usage, action: .release, mods: mods)
                 return
             }
+        }
+
+        // F1-F12 from the toolbar or the touch keyboard, by name ("F1").
+        // Ghostty encodes them for the active keyboard protocol; the xterm
+        // sequences are the fallback when the surface is unavailable.
+        if let number = KeyID.functionKeyNumber(key) {
+            if let usage = Self.functionKeyHIDUsage(number) {
+                let mods = Self.ghosttyMods(modifiers)
+                if sendKeyViaGhostty(keyCode: usage, action: .press, mods: mods) {
+                    _ = sendKeyViaGhostty(keyCode: usage, action: .release, mods: mods)
+                    return
+                }
+            }
+            sendUserInput(Data(Self.functionKeySequence(number, modifiers: modifiers).utf8))
+            return
         }
 
         // Fallback: manually build escape sequences for keys that don't have

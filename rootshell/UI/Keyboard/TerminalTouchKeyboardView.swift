@@ -1251,9 +1251,9 @@ final class TerminalTouchKeyboardView: UIView, KeyboardButtonDelegate, UIGesture
                 case .compose: action = .compose; title = id.displayName
                 case .paste: action = .paste; title = id.displayName
                 default:
-                    title = id.category == .symbol ? id.keyValue : id.displayName
+                    title = id.category == .symbol || id.category == .function ? id.keyValue : id.displayName
                     action = id.category == .symbol ? .text(id.keyValue)
-                        : (id.category == .navigation ? .key(id.keyValue) : .toolbar(id.keyValue))
+                        : (id.category == .navigation || id.category == .function ? .key(id.keyValue) : .toolbar(id.keyValue))
                 }
                 return Model.Key(title: title, action: action, symbol: id.iconName, accessibility: id.displayName)
             }
