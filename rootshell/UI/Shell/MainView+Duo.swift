@@ -71,6 +71,7 @@ extension MainView {
     @ViewBuilder
     func applyDuoChrome<Content: View>(_ content: Content) -> some View {
         #if !targetEnvironment(macCatalyst) && !os(visionOS)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *) {
             content
                 .toolbarVisibility(showsDuoSideRail ? .visible : .hidden, for: .navigationBar)
@@ -102,7 +103,9 @@ extension MainView {
                         }
                     }
                 }
-        } else {
+        }
+#endif
+        do {
             content
         }
         #else
@@ -111,6 +114,7 @@ extension MainView {
     }
 
     #if !targetEnvironment(macCatalyst) && !os(visionOS)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
     @available(iOS 27.1, *)
     @ToolbarContentBuilder
     private var duoTabToolbarItem: some ToolbarContent {
@@ -136,6 +140,7 @@ extension MainView {
         .axisBehavior(.verticalPreferred)
         .visibilityPriority(.high)
     }
+#endif
     #endif
 
     /// After a display or window change UIKit can take the rail's tab button

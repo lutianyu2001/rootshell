@@ -2919,6 +2919,7 @@ extension Ghostty.TerminalView: UIContextMenuInteractionDelegate {
         menuItems.append(tabBarMenu)
 
         #if os(iOS) && !targetEnvironment(macCatalyst)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *) {
             let mode = SettingsStore.shared.get(Settings.Tabs.duoFrontDisplayMode)
             let modeLocked = SettingFileLock.isReadOnly(Settings.Tabs.duoFrontDisplayMode.name)
@@ -2948,6 +2949,7 @@ extension Ghostty.TerminalView: UIContextMenuInteractionDelegate {
                 children: layoutActions
             ))
         }
+#endif
         #endif
 
         // Change title action

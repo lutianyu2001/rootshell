@@ -1423,6 +1423,7 @@ extension VNCPaneView: RemoteScreenPane {
 /// material cards.
 struct VNCPaneRootView: View {
     @ObservedObject var pane: VNCPaneView
+    init(pane: VNCPaneView) { _pane = ObservedObject(wrappedValue: pane) }
     @Bindable private var brightnessManager = BrightnessManager.shared
     // Read here rather than snapshotted on the pane: the package treats speed
     // as a live value, so a change in Settings reaches an open session.

@@ -227,6 +227,7 @@ enum QuickSettingsCatalog {
             integer(Settings.Sidebar.rowLines, 1...3),
         ]
         #if os(iOS) && !targetEnvironment(macCatalyst)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *) {
             entries += [
                 choices(Settings.Tabs.duoFrontDisplayMode, label: { $0.displayName })
@@ -239,6 +240,7 @@ enum QuickSettingsCatalog {
                     .annotated(String(localized: "Text behind the camera will be hidden.")),
             ]
         }
+#endif
         #endif
         entries += [
             choices(Settings.Power.maxRefreshRate, label: { $0.displayName }, set: { PowerManager.shared.maxRefreshRate = $0 }),

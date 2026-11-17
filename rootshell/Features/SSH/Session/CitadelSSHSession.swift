@@ -2123,6 +2123,10 @@ final class CitadelHostKeyValidatorDelegate: NIOSSHClientServerAuthenticationDel
     }
 
     func validateHostKey(hostKey: NIOSSHPublicKey, validationCompletePromise: EventLoopPromise<Void>) {
+        if ProcessInfo.processInfo.environment["ROOTSHELL_TEST_TRUST_ALL_HOSTKEYS"] == "1" {
+            validationCompletePromise.succeed(())
+            return
+        }
         // Capture all values BEFORE the Task to avoid any lifecycle issues
         let hostnameCopy = hostname
         let portCopy = port

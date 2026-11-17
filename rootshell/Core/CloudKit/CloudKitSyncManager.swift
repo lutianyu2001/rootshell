@@ -51,10 +51,10 @@ final class CloudKitSyncManager {
     // MARK: - CloudKit Components
 
     /// CloudKit container
-    private let container: CKContainer
+    @ObservationIgnored private lazy var container: CKContainer = CKContainer(identifier: AppIdentifiers.iCloudContainerID)
 
     /// Private database
-    private let database: CKDatabase
+    @ObservationIgnored private lazy var database: CKDatabase = container.privateCloudDatabase
 
     /// Offline queue for pending changes
     private let offlineQueue = CloudKitOfflineQueue()
@@ -98,8 +98,6 @@ final class CloudKitSyncManager {
     // MARK: - Initialization
 
     private init() {
-        self.container = CKContainer(identifier: AppIdentifiers.iCloudContainerID)
-        self.database = container.privateCloudDatabase
 
         // Load settings
         loadSettings()

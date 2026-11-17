@@ -111,7 +111,9 @@ private enum SearchBuild {
     }
     static var supportsDuoLayout: Bool {
         #if os(iOS) && !targetEnvironment(macCatalyst)
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *) { return true }
+#endif
         #endif
         return false
     }

@@ -318,8 +318,10 @@ final class TerminalTouchKeyboardView: UIView, KeyboardButtonDelegate, UIGesture
     /// The half-open Duo's vertical fold, as UIKit reserves it in this view.
     /// Queried here: the app window's regions don't convert into the keyboard window.
     private var splitFoldFrame: CGRect? {
-        guard #available(iOS 27.1, *) else { return nil }
+        return nil
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         return reservedRegions(kind: .division).map(\.frame).first { $0.height > $0.width }
+#endif
     }
 
     /// iPad and the Duo's inner display can split without a fold, from the Placement menu.
@@ -774,10 +776,12 @@ final class TerminalTouchKeyboardView: UIView, KeyboardButtonDelegate, UIGesture
             placementPinch = pinch
             addGestureRecognizer(pinch)
         }
+#if false // Needs the iOS 27.1 SDK; see docs/old-xcode-compat.md
         if #available(iOS 27.1, *) {
             // Folding moves the division region without resizing the keyboard.
             addInteraction(UIHingeInteraction { [weak self] _, _ in self?.setNeedsLayout() })
         }
+#endif
         loadToolbarConfiguration()
         if KeyboardToolbarManager.shared.drawerOpenByDefault {
             toolbarDrawerState = .closed.toggled(rowCount: configuredDrawers.count,

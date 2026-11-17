@@ -11,6 +11,7 @@ import rootshellVNC
 
 struct KVMPaneRootView: View {
     @ObservedObject var pane: KVMPaneView
+    init(pane: KVMPaneView) { _pane = ObservedObject(wrappedValue: pane) }
     @Bindable private var brightnessManager = BrightnessManager.shared
     @Setting(Settings.ScreenSharing.pointerSpeed) private var pointerSpeed
     @Setting(Settings.ScreenSharing.cursorSizeDefault) private var cursorSizeDefault
