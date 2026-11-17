@@ -306,7 +306,8 @@ rootshell collects no analytics or crash data unless otherwise part of the TestF
 Building rootshell requires:
 
 - iOS/iPadOS 18.0+, macOS 14.0+, or visionOS 26.0+
-- Xcode 26.4+
+- Xcode 26.3 (iOS 26.2 SDK, Swift 6.2.4) on macOS 15.8.3: this branch builds the Mac Catalyst app there,
+  on an Intel Mac mini (2018); see [docs/old-xcode-compat.md](docs/old-xcode-compat.md)
 - An Apple Silicon Mac for iOS Simulator builds
 
 Clone the repository, open `rootshell.xcodeproj` in Xcode, and let Swift Package Manager resolve the project dependencies:
