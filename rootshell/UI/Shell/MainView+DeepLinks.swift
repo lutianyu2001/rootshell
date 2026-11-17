@@ -240,6 +240,10 @@ extension MainView {
                 username: components.username ?? "",
                 password: ""
             )
+            if ProcessInfo.processInfo.environment["ROOTSHELL_TEST_CONNECT_URL"] == "1" {
+                createSSHTab(with: prefillConfig)
+                return
+            }
             reconnectConfig = prefillConfig
             showConnectionSidebar = true
         }

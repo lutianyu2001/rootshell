@@ -109,9 +109,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             // whenever the first surface reads the frame-rate range. Inside
             // the gate because init reads the persisted refresh settings.
             _ = PowerManager.shared
-            Task { @MainActor in
-                await CloudKitSyncManager.shared.logDiagnostics()
-                await CloudKitSyncManager.shared.revalidateSubscriptionsIfNeeded()
+            if ProcessInfo.processInfo.environment["ROOTSHELL_TEST_NO_CLOUDKIT"] != "1" {
+                Task { @MainActor in
+                    await CloudKitSyncManager.shared.logDiagnostics()
+                    await CloudKitSyncManager.shared.revalidateSubscriptionsIfNeeded()
+                }
             }
             // A locked launch builds its scenes only now that settings are primed.
             LaunchReadiness.shared.markReady()
