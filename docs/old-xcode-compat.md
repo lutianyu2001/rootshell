@@ -1,21 +1,25 @@
 # Building with an older Xcode
 
-The branch `compat/xcode-26.3` builds rootshell with Xcode 26.3 on a Mac that
-cannot run the Xcode the project needs. It was made on an Intel Mac mini (2018,
-Macmini8,1) with macOS 15.8.3, Xcode 26.3 (17C529), the iOS 26.2 SDK and Swift
-6.2.4. The project itself needs Xcode 27.1 (the iOS 27.1 SDK), which requires
-macOS Tahoe 26.6 or later.
+This fork's main builds with Xcode 26.3, on a Mac that cannot run the Xcode
+upstream needs. It was made on an Intel Mac mini (2018, Macmini8,1) with macOS
+15.8.3, Xcode 26.3 (17C529), the iOS 26.2 SDK and Swift 6.2.4. Upstream needs
+Xcode 27.1 (the iOS 27.1 SDK), which requires macOS Tahoe 26.6 or later; main
+gives up the iPhone Duo hinge and fold support instead, which this fork does not
+use. The changes came from the branch `compat/xcode-26.3`.
 
 What builds there: the sandboxed Mac Catalyst app (`rootshell-AppStore`),
 unsigned, which then runs on that Mac. What does not: iOS device builds (they
 need a signing team) and the iOS Simulator (see below).
 
-The branch never goes upstream. Bring upstream into it by merging `upstream`;
-to test a change, merge its branch into a throwaway branch cut from this one.
-A branch that also edits the README's Xcode line conflicts there; keep this
-branch's line.
+- **Merging upstream into main:** upstream keeps adding code for the iOS 27.1
+  SDK. After each merge, build with Xcode 26.3 and wrap whatever new code fails
+  the way the next section says.
+- **A branch meant for upstream** starts from `upstream`, which has none of these
+  changes, so it does not build with Xcode 26.3 by itself. To build or test it
+  on the old Xcode, merge it into a throwaway branch cut from main. Where it also
+  edits the README's Xcode line, keep main's line.
 
-## What the branch changes, and why
+## What main changes, and why
 
 Each item was a compile or launch failure with the versions above.
 
@@ -67,7 +71,7 @@ signs it ad hoc. What it works around:
 - **Restricted entitlements.** iCloud, keychain groups and push need a
   provisioning profile, so an ad hoc signature cannot carry them. Without the
   iCloud entitlement `CKContainer(identifier:)` traps (SIGILL) at launch; the
-  branch creates the container on first use and skips the launch-time CloudKit
+  code creates the container on first use and skips the launch-time CloudKit
   calls when `ROOTSHELL_TEST_NO_CLOUDKIT=1`.
 
 ## Test switches
