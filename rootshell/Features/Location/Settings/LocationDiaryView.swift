@@ -15,6 +15,14 @@ struct LocationDiaryView: View {
                     Text("Continuously tracks location to keep SSH and Screen Sharing connections and long-running local tasks alive in the background. Shows locations from the last 5 minutes.")
                         .font(.caption)
                         .foregroundColor(.secondary)
+
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Image(systemName: "battery.25")
+                            .foregroundStyle(.orange)
+                        Text("Continuous location tracking increases battery use.")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 }
                 .padding(.vertical, 4)
                 .themedRow()

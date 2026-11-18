@@ -1074,7 +1074,8 @@ struct SettingsSearchEntry: Identifiable, Hashable {
 
             // MARK: Privacy & Data (inline, touch)
             row("location-diary-mode", String(localized: "Location Diary Mode"), in: .general, icon: "mappin.and.ellipse",
-                keywords: ["tracking", "location", "diary", "session only", "auto during active sessions"],
+                keywords: ["tracking", "location", "diary", "session only", "auto during active sessions",
+                           "background", "keep alive", "battery"],
                 available: !isCatalyst),
 
             // MARK: Live Activity
