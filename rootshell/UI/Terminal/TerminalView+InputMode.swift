@@ -18,6 +18,9 @@ extension Ghostty.TerminalView {
         // text-input responder. A saved language must not mask that mode.
         if isSystemEmojiInputActive { return super.textInputMode }
         guard let target = preferredInputLanguage else { return super.textInputMode }
+        if InputMethodDebugLogger.shared.isEnabled, super.textInputMode?.primaryLanguage != target {
+            InputMethodDebugLogger.shared.log("textInputMode override \(target) over system \(super.textInputMode?.primaryLanguage ?? "nil")")
+        }
 
         if let exact = UITextInputMode.activeInputModes.first(where: { $0.primaryLanguage == target }) {
             return exact

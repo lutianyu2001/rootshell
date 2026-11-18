@@ -22,6 +22,7 @@ extension Ghostty.TerminalView {
                         self.invalidateWritingAssistance()
                         self.writingAssistanceSource = nil
                     } else if name == UITextInputMode.currentInputModeDidChangeNotification {
+                        InputMethodDebugLogger.shared.log("writing assistance: input mode changed")
                         self.syncDictationSessionWithSignals()
                     } else if name == UIApplication.didBecomeActiveNotification,
                               self.writingAssistanceRequeryDeferred {
