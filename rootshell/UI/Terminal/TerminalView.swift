@@ -4469,6 +4469,18 @@ extension Ghostty {
             if !activeKeyboardModifiers.isEmpty {
                 Ghostty.logger.debug("TerminalView.insertText: Applying modifiers rawValue=\(self.activeKeyboardModifiers.rawValue) to '\(text)'")
 
+                // A Command chord is an app shortcut, as on a hardware keyboard
+                // (Command-C copies). Terminal encodings have no Command, so
+                // Ghostty's encoder would drop it and type the bare character;
+                // an unbound chord types nothing, like its hardware twin.
+                if activeKeyboardModifiers.contains(.command) {
+                    if text.count == 1, let char = text.first, let trigger = toolbarCommandTrigger(for: char) {
+                        dispatchKeybindTrigger(trigger)
+                    }
+                    keyboardAccessoryController?.clearOneShotModifiers()
+                    return
+                }
+
                 // Ctrl-C: interrupt local shell (matches hardware keyboard behavior in TerminalViewKeyboard.swift)
                 #if !targetEnvironment(macCatalyst)
                 if activeKeyboardModifiers.contains(.control), text.lowercased() == "c",
@@ -5913,6 +5925,18 @@ extension Ghostty.TerminalView {
     ///   - char: The character being pressed (lowercase for letters)
     ///   - modifiers: Active keyboard modifiers from toolbar
     /// - Returns: `true` if the key was handled via Ghostty, `false` if no mapping exists
+    /// The keybind trigger for a character typed with toolbar modifiers that
+    /// include Command. An uppercase letter counts as Shift.
+    private func toolbarCommandTrigger(for char: Character) -> KeyTrigger? {
+        let modifiers = activeKeyboardModifiers
+        var bindingModifiers: KeybindModifiers = .command
+        if modifiers.contains(.control) { bindingModifiers.insert(.control) }
+        if modifiers.contains(.alt) { bindingModifiers.insert(.option) }
+        if modifiers.contains(.shift) || (char.isLetter && char.isUppercase) { bindingModifiers.insert(.shift) }
+        guard let key = KeyCode(uiKeyInput: String(char).lowercased()) else { return nil }
+        return KeyTrigger(key: key, modifiers: bindingModifiers)
+    }
+
     private func sendViaGhosttyKeyEvent(_ char: Character, modifiers: KeyModifiers, shifted: Character? = nil) -> Bool {
         let lookupChar = char.lowercased().first ?? char
         guard let hidUsage = Self.characterHIDUsageMap[lookupChar] else { return false }
