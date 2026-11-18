@@ -11,6 +11,7 @@ struct DebugSettingsView: View {
     @Environment(\.sheetThemeColors) private var sheetThemeColors
     @Setting(Settings.System.screenshotMode) private var screenshotMode
     @AppStorage(ResumeDebugLogger.enabledKey) private var resumeDebugLogging: Bool = false
+    @AppStorage(InputMethodDebugLogger.enabledKey) private var inputMethodDebugLogging: Bool = false
     @AppStorage(LifecycleDebugLogger.enabledKey) private var lifecycleDebugLogging: Bool = false
     @AppStorage(SSHDebugLogger.enabledKey) private var sshDebugLogging: Bool = false
     @AppStorage(VNCDebugLogger.enabledKey) private var vncDebugLogging: Bool = false
@@ -26,6 +27,7 @@ struct DebugSettingsView: View {
 
     /// Log file sizes for display
     @State private var logFileSize: String = "—"
+    @State private var inputMethodLogFileSize: String = "—"
     @State private var lifecycleLogFileSize: String = "—"
     @State private var sshLogFileSize: String = "—"
     @State private var vncLogFileSize: String = "—"
@@ -137,6 +139,42 @@ struct DebugSettingsView: View {
                 Text("Program Status Log File")
             } footer: {
                 Text("Log is stored at Documents/.ghostty/program_status_debug.log")
+            }
+
+            // MARK: - Input Method Debug
+
+            Section {
+                Toggle("Input Method Debug Logging", isOn: $inputMethodDebugLogging)
+                    .themedRow()
+            } header: {
+                Text("Input Method")
+            } footer: {
+                Text("Logs hardware key presses, input source changes and the work done on them, with millisecond times. Useful for a slow switch with the Globe key.")
+            }
+
+            Section {
+                HStack {
+                    Text("Log File Size")
+                    Spacer()
+                    Text(inputMethodLogFileSize)
+                        .foregroundColor(.secondary)
+                }
+                .themedRow()
+
+                Button("Export Log File") {
+                    exportDebugLog(named: "input_method_debug.log")
+                }
+                .themedRow()
+
+                Button("Clear Log File", role: .destructive) {
+                    clearDebugLog(named: "input_method_debug")
+                    inputMethodLogFileSize = debugLogFileSize(named: "input_method_debug.log")
+                }
+                .themedRow()
+            } header: {
+                Text("Input Method Log File")
+            } footer: {
+                Text("Log is stored at Documents/.ghostty/input_method_debug.log")
             }
 
             // MARK: - Session Resume Debug
@@ -398,6 +436,7 @@ struct DebugSettingsView: View {
         .onAppear {
             refreshAgentCaptureFileSize()
             refreshLogFileSize()
+            inputMethodLogFileSize = debugLogFileSize(named: "input_method_debug.log")
             refreshLifecycleLogFileSize()
             refreshSSHLogFileSize()
             refreshVNCLogFileSize()
@@ -468,6 +507,32 @@ struct DebugSettingsView: View {
     }
 
     // MARK: - Resume Log Helpers
+
+    // MARK: - Input Method Log Helpers
+
+    private func debugLogFileSize(named name: String) -> String {
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let logURL = documentsURL.appendingPathComponent(".ghostty/\(name)")
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: logURL.path),
+           let size = attrs[.size] as? UInt64 {
+            return ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+        }
+        return "No log file"
+    }
+
+    private func exportDebugLog(named name: String) {
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let logURL = documentsURL.appendingPathComponent(".ghostty/\(name)")
+        guard FileManager.default.fileExists(atPath: logURL.path) else { return }
+        presentShareSheet(for: logURL)
+    }
+
+    /// Removes `<stem>.log` and its rotated `<stem>.1.log`.
+    private func clearDebugLog(named stem: String) {
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        try? FileManager.default.removeItem(at: documentsURL.appendingPathComponent(".ghostty/\(stem).log"))
+        try? FileManager.default.removeItem(at: documentsURL.appendingPathComponent(".ghostty/\(stem).1.log"))
+    }
 
     private func refreshLogFileSize() {
         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]

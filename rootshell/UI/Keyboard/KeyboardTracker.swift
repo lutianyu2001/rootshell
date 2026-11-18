@@ -766,6 +766,7 @@ class KeyboardTracker {
         refreshHardwareModifierState()
 
         keyboardInput.keyChangedHandler = { [weak self] _, key, keyCode, pressed in
+            InputMethodDebugLogger.shared.log("GCKeyboard keyCode=0x\(String(keyCode.rawValue, radix: 16)) pressed=\(pressed)")
             // Detect modifier key changes to refresh link detection
             // (e.g., Cmd+hover should highlight links without requiring mouse movement)
             let isModifierKey = keyCode == .leftGUI || keyCode == .rightGUI ||

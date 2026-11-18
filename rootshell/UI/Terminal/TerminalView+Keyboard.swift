@@ -263,7 +263,23 @@ extension Ghostty.TerminalView {
 
 extension Ghostty.TerminalView {
 
+    /// Input method debug log: what UIKit delivered for each press.
+    func logInputMethodPresses(_ phase: String, _ presses: Set<UIPress>) {
+        let logger = InputMethodDebugLogger.shared
+        guard logger.isEnabled else { return }
+        for press in presses {
+            guard let key = press.key else {
+                logger.log("\(phase) non-key press type=\(press.type.rawValue)")
+                continue
+            }
+            logger.log("\(phase) keyCode=0x\(String(key.keyCode.rawValue, radix: 16)) "
+                + "mods=0x\(String(key.modifierFlags.rawValue, radix: 16)) "
+                + "chars=\(key.characters.debugDescription) raw=\(key.charactersIgnoringModifiers.debugDescription)")
+        }
+    }
+
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        logInputMethodPresses("pressesBegan", presses)
         lastHardwareTextInputTime = ProcessInfo.processInfo.systemUptime
         endDictationSession()
         invalidateWritingAssistance()
@@ -329,6 +345,9 @@ extension Ghostty.TerminalView {
         }
 
         if handled { keyboardAccessoryController?.clearOneShotModifiers() }
+        if InputMethodDebugLogger.shared.isEnabled {
+            InputMethodDebugLogger.shared.log("pressesBegan handled=\(handled) forwarded=\(forwardedPresses.count)/\(presses.count)")
+        }
         if !forwardedPresses.isEmpty {
             super.pressesBegan(forwardedPresses, with: event)
         }
@@ -990,6 +1009,7 @@ extension Ghostty.TerminalView {
     }
 
     override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        logInputMethodPresses("pressesEnded", presses)
         if shouldYieldHardwareInputToEmojiUI {
             resetKeyboardInteractionState(sendSyntheticKeyReleases: true)
             super.pressesEnded(presses, with: event)
@@ -1051,6 +1071,7 @@ extension Ghostty.TerminalView {
     }
 
     override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        logInputMethodPresses("pressesCancelled", presses)
         resetKeyboardInteractionState(sendSyntheticKeyReleases: true)
         super.pressesCancelled(presses, with: event)
     }
