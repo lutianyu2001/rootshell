@@ -1,4 +1,5 @@
-# The fork's checks: on a push to main, on a pull request, and from release.yml before a release,
+# The fork's checks: on a push to main, on a pull request, by hand (gh workflow run ci.yml --ref
+# <branch>), and from release.yml before a release,
 # run the logic unit tests (rootshellTests) on an iOS simulator and build the SideStore IPA
 # (scripts/sideload/build-ipa.sh). By hand: the same xcodebuild test command, and the script.
 name: CI
@@ -9,6 +10,7 @@ on:
       - main
   pull_request:
   workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
