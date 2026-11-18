@@ -12,6 +12,11 @@ on:
 permissions:
   contents: read
 
+# The Xcode the fork is built with, as on the Mac mini (docs/old-xcode-compat.md); the runner
+# image keeps several.
+env:
+  DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+
 jobs:
   # The fork's ci.yml, its tests and its IPA build: a release goes out only when they pass.
   # ./ rather than $/, which actionlint 1.7.12 does not know yet.

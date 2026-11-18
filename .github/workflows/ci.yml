@@ -13,6 +13,11 @@ on:
 permissions:
   contents: read
 
+# The Xcode the fork is built with, as on the Mac mini (docs/old-xcode-compat.md); the runner
+# image keeps several.
+env:
+  DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+
 jobs:
   test:
     runs-on: macos-26
@@ -22,10 +27,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: List the Xcode versions on the runner
-        run: |
-          ls -d /Applications/Xcode*.app
-          xcodebuild -version
+      - name: Show the Xcode version
+        run: xcodebuild -version
 
       # The newest available iPhone simulator.
       - name: Run rootshellTests
