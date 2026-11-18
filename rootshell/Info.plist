@@ -79,6 +79,8 @@
 		<string>_rfb._tcp</string>
 		<string>_remotepairing._tcp</string>
 	</array>
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>com.kk2.ghostty-ios.transfer-tssh-session</string>
