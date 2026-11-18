@@ -30,6 +30,7 @@ class KeyboardToolbarManager {
         Settings.KeyboardToolbar.customKeys.name,
         Settings.KeyboardToolbar.drawerOpenByDefault.name,
         Settings.KeyboardToolbar.drawerToggleMode.name,
+        Settings.KeyboardToolbar.keyLabelSet.name,
     ]
 
     @ObservationIgnored private var isReloading = false
@@ -65,6 +66,15 @@ class KeyboardToolbarManager {
         }
     }
 
+    /// Which look the built-in keys take; toolbars rebuild when it changes.
+    var keyLabelSet: ToolbarKeyLabelSet {
+        didSet {
+            guard !isReloading else { return }
+            SettingsStore.shared.set(Settings.KeyboardToolbar.keyLabelSet, keyLabelSet)
+            notifyChange()
+        }
+    }
+
     // MARK: - Computed Properties
 
     var isCustomized: Bool {
@@ -84,6 +94,7 @@ class KeyboardToolbarManager {
         customKeys = Self.loadCustomKeys()
         drawerOpenByDefault = SettingsStore.shared.get(Settings.KeyboardToolbar.drawerOpenByDefault)
         drawerToggleMode = SettingsStore.shared.get(Settings.KeyboardToolbar.drawerToggleMode)
+        keyLabelSet = SettingsStore.shared.get(Settings.KeyboardToolbar.keyLabelSet)
 
         // Check if device idiom changed (e.g. restored backup from different device)
         let savedIdiom = UserDefaults.standard.string(forKey: Self.deviceIdiomKey)
@@ -113,6 +124,9 @@ class KeyboardToolbarManager {
         }
         if keys.contains(Settings.KeyboardToolbar.drawerToggleMode.name) {
             drawerToggleMode = SettingsStore.shared.get(Settings.KeyboardToolbar.drawerToggleMode)
+        }
+        if keys.contains(Settings.KeyboardToolbar.keyLabelSet.name) {
+            keyLabelSet = SettingsStore.shared.get(Settings.KeyboardToolbar.keyLabelSet)
         }
         isReloading = false
         notifyChange()

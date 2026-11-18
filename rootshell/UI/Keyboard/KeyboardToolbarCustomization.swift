@@ -437,6 +437,31 @@ enum DrawerToggleMode: String, Codable, CaseIterable, Sendable {
     }
 }
 
+// MARK: - ToolbarKeyLabelSet
+
+/// Alternative looks for built-in toolbar keys. A set names only the keys it
+/// changes; every other key keeps its default look.
+enum ToolbarKeyLabelSet: String, Codable, CaseIterable, Sendable {
+    case standard
+    /// Esc as the text "Esc" instead of the escape glyph, easier to tell apart beside F1-F12 and other text keys.
+    case textEscape
+
+    var displayName: String {
+        switch self {
+        case .standard: return String(localized: "Default")
+        case .textEscape: return String(localized: "Text Esc")
+        }
+    }
+
+    /// SF Symbol for `key` in this set; nil shows the key's text label.
+    func iconName(for key: KeyID) -> String? {
+        switch (self, key) {
+        case (.textEscape, .esc): return nil
+        default: return key.iconName
+        }
+    }
+}
+
 // MARK: - ToolbarLayoutConfig
 
 /// Persisted toolbar layout configuration.

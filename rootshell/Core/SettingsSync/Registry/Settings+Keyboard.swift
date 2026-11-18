@@ -9,6 +9,7 @@ import Foundation
 
 extension Ghostty.OptionKeyAsAlt: SettingValue {}
 extension DrawerToggleMode: SettingValue {}
+extension ToolbarKeyLabelSet: SettingValue {}
 extension TerminalWritingAssistanceMode: SettingValue {}
 extension KeyboardArrowJoystickButton.Mode: SettingValue {}
 extension TerminalTouchKeyboardModel.FloatingGlassStyle: SettingValue {}
@@ -136,6 +137,10 @@ nonisolated extension Settings {
             "keyboardToolbarDrawerToggleMode", default: DrawerToggleMode.stack, group: .keyboardToolbar, policy: .localByDefault,
             configKey: "keyboard-toolbar-drawer-toggle-mode",
             title: String(localized: "More Button Behavior", comment: "Setting title"))
+        static let keyLabelSet = SettingKey(
+            "keyboardToolbarKeyLabelSet", default: ToolbarKeyLabelSet.standard, group: .keyboardToolbar, policy: .localByDefault,
+            configKey: "keyboard-toolbar-key-labels",
+            title: String(localized: "Key Labels", comment: "Setting title"))
         static let persistent = SettingKey(
             "persistentToolbar", default: false, group: .keyboardToolbar, policy: .localByDefault,
             configKey: "persistent-toolbar",
@@ -154,6 +159,7 @@ nonisolated extension Settings {
 
         static let all: [AnySettingDefinition] = [
             config.erased, customKeys.erased, deviceIdiom.erased, drawerOpenByDefault.erased, drawerToggleMode.erased,
+            keyLabelSet.erased,
             persistent.erased, showWithHardwareKeyboard.erased, arrowJoystickMode.erased,
             remoteScreenStripExpanded.erased,
         ]

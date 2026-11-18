@@ -797,6 +797,8 @@ struct SettingsSearchEntry: Identifiable, Hashable {
                 keywords: ["drawer", "more button", "rows"]),
             row("toolbar-open-drawer", String(localized: "Open Drawer by Default"), in: .toolbarKeys,
                 keywords: ["drawer", "default"]),
+            row("toolbar-key-labels", String(localized: "Key Labels"), in: .toolbarKeys,
+                keywords: ["esc", "escape", "glyph", "icon", "text", "label"]),
 
             // MARK: Keyboard Shortcuts
             row("keybinds-ghostty-import", String(localized: "Import Keybinds from Ghostty Config"), in: .keyboardShortcuts, icon: "doc.badge.plus",

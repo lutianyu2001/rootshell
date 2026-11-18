@@ -1259,7 +1259,7 @@ final class TerminalTouchKeyboardView: UIView, KeyboardButtonDelegate, UIGesture
                     default: action = .toolbar(id.keyValue); title = id.displayName
                     }
                 }
-                return Model.Key(title: title, action: action, symbol: id.iconName, accessibility: id.displayName)
+                return Model.Key(title: title, action: action, symbol: manager.keyLabelSet.iconName(for: id), accessibility: id.displayName)
             }
         }
         configuredDrawerToggle = key(for: .builtIn(.drawerToggle))
@@ -1984,10 +1984,15 @@ final class TerminalTouchKeyboardView: UIView, KeyboardButtonDelegate, UIGesture
                   let locks = modifierState.heldSweepLocks(sweep.modifiers) else { continue }
             for modifier in sweep.modifiers { heldLocks[modifier] = locks }
         }
+        let toolbarCaps = controls + toolbarDrawerButtons.flatMap({ $0 }).map(\.keycap)
+        // The toolbar's key labels can show its Esc as text; the typing rows keep the glyph setting.
+        let toolbarTextEscape = KeyboardToolbarManager.shared.keyLabelSet.iconName(for: .esc) == nil
         for cap in controls + rows.flatMap({ $0 }) + toolbarDrawerButtons.flatMap({ $0 }).map(\.keycap) {
             if cap.key.action == .drawer { cap.selected = toolbarDrawerState != .closed }
             switch cap.key.action {
-            case .key("\u{1b}"): cap.setSymbol(glyphsEnabled ? "escape" : nil)
+            case .key("\u{1b}"):
+                let textEscape = toolbarTextEscape && toolbarCaps.contains { $0 === cap }
+                cap.setSymbol(glyphsEnabled && !textEscape ? "escape" : nil)
             case .key("\t"): cap.setSymbol(glyphsEnabled ? "arrow.right.to.line" : nil)
             case .modifier(.control): cap.setSymbol(glyphsEnabled ? "control" : nil)
             case .modifier(.alt): cap.setSymbol(glyphsEnabled ? "option" : nil)
