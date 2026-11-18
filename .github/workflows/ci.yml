@@ -1,29 +1,24 @@
-# The fork's checks: on a push to main, on a pull request, by hand (gh workflow run ci.yml --ref
-# <branch>), and from release.yml before a release,
-# run the logic unit tests (rootshellTests) on an iOS simulator and build the SideStore IPA
-# (scripts/sideload/build-ipa.sh). By hand: the same xcodebuild test command, and the script.
+# The checks of an Xcode app: on a push to main, on a pull request, by hand (gh workflow run ci.yml
+# --ref <branch>), and from release.yml before a release, run the unit tests on an iOS simulator and
+# build the IPA (scripts/sideload/build-ipa.sh). By hand: the same xcodebuild test command, and the
+# script.
 name: CI
 
 # A change to docs alone builds nothing, so it runs no checks.
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
+    branches: [main]
+    paths-ignore: ["docs/**", "**/*.md"]
   pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
+    paths-ignore: ["docs/**", "**/*.md"]
   workflow_call:
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# The Xcode the fork is built with, as on the Mac mini (docs/old-xcode-compat.md); the runner
-# image keeps several.
+# Per project: an Xcode the project builds with. The runner image keeps several side by side
+# (/Applications/Xcode_<version>.app); its default, the newest, may refuse code an older one takes.
 env:
   DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
 
@@ -48,8 +43,9 @@ jobs:
       - name: Show the Xcode version
         run: xcodebuild -version
 
-      # The newest available iPhone simulator.
-      - name: Run rootshellTests
+      # The newest available iPhone simulator. Per project: the project and the scheme that runs
+      # the unit tests.
+      - name: Run the unit tests
         run: |
           udid=$(xcrun simctl list devices available -j | python3 -c '
           import json, sys
@@ -81,7 +77,8 @@ jobs:
           umask 077
           printf 'machine api.github.com login x-access-token password %s\n' "$TOKEN" > ~/.netrc
 
-      # The Metal shaders need Xcode's Metal Toolchain, a separate download.
+      # Metal shaders need Xcode's Metal Toolchain, a separate download. Per project: delete this
+      # step when the project has no .metal files.
       - name: Install the Metal Toolchain
         run: |
           xcodebuild -version
@@ -90,4 +87,4 @@ jobs:
           fi
 
       - name: Build the IPA
-        run: scripts/sideload/build-ipa.sh "$RUNNER_TEMP/derived" "$RUNNER_TEMP/rootshell-ci-ios.ipa"
+        run: scripts/sideload/build-ipa.sh "$RUNNER_TEMP/derived" "$RUNNER_TEMP/ci-ios.ipa"

@@ -1,7 +1,7 @@
-# The release of the sideloading IPA: pushing a version tag runs ci.yml, then builds an IPA, signed
-# ad hoc only, on macOS and creates the GitHub release with it, to be installed with SideStore
-# (docs/sideload.md). This file holds all of the fork's releasing. By hand: scripts/sideload/build-ipa.sh, then gh release create
-# with the IPA.
+# The release of an Xcode app's IPA for SideStore: pushing a version tag runs ci.yml, then builds an
+# IPA, signed ad hoc only, on macOS and creates the GitHub release with it. This file holds all of
+# the project's releasing. By hand: scripts/sideload/build-ipa.sh, then gh release create with the
+# IPA.
 name: Release
 
 on:
@@ -12,13 +12,12 @@ on:
 permissions:
   contents: read
 
-# The Xcode the fork is built with, as on the Mac mini (docs/old-xcode-compat.md); the runner
-# image keeps several.
+# Per project: the same Xcode as ci.yml.
 env:
   DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
 
 jobs:
-  # The fork's ci.yml, its tests and its IPA build: a release goes out only when they pass.
+  # The project's ci.yml, its tests and its IPA build: a release goes out only when they pass.
   # ./ rather than $/, which actionlint 1.7.12 does not know yet.
   ci: # zizmor: ignore[self-repository]
     uses: ./.github/workflows/ci.yml
@@ -43,7 +42,8 @@ jobs:
           umask 077
           printf 'machine api.github.com login x-access-token password %s\n' "$TOKEN" > ~/.netrc
 
-      # The Metal shaders need Xcode's Metal Toolchain, a separate download.
+      # Metal shaders need Xcode's Metal Toolchain, a separate download. Per project: delete this
+      # step when the project has no .metal files.
       - name: Install the Metal Toolchain
         run: |
           xcodebuild -version
@@ -51,7 +51,8 @@ jobs:
             xcodebuild -downloadComponent MetalToolchain
           fi
 
-      # The IPA is named rootshell-<version>-ios.ipa, the version being the tag without its v.
+      # The IPA is named <project>-<version>-ios.ipa, the version being the tag without its v.
+      # Per project: the project's name.
       - name: Build the IPA
         env:
           TAG: ${{ github.ref_name }}
