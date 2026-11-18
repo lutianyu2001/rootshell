@@ -1967,6 +1967,16 @@ extension Ghostty {
             addGestureRecognizer(doubleTapGesture)
 
             tapGesture.require(toFail: doubleTapGesture)
+            // The tap waits for the double tap to fail, and meanwhile UIKit
+            // holds back touchesEnded for every touch it tracks. A trackpad
+            // click's button release then reaches the terminal ~300 ms late,
+            // and so does whatever acts on it (Ghostty's prompt click-to-move,
+            // a TUI that moves its cursor on release). The pointer reports
+            // press and release from touchesBegan/touchesEnded itself.
+            tapGesture.allowedTouchTypes = [
+                NSNumber(value: UITouch.TouchType.direct.rawValue),
+                NSNumber(value: UITouch.TouchType.pencil.rawValue),
+            ]
             #endif
 
             #if targetEnvironment(macCatalyst)
