@@ -1,6 +1,6 @@
-# The release of the sideloading IPA: pushing a version tag builds an IPA, signed ad hoc only, on
-# macOS and creates the GitHub release with it, to be installed with SideStore (docs/sideload.md). This file
-# holds all of the fork's releasing. By hand: scripts/sideload/build-ipa.sh, then gh release create
+# The release of the sideloading IPA: pushing a version tag runs ci.yml, then builds an IPA, signed
+# ad hoc only, on macOS and creates the GitHub release with it, to be installed with SideStore
+# (docs/sideload.md). This file holds all of the fork's releasing. By hand: scripts/sideload/build-ipa.sh, then gh release create
 # with the IPA.
 name: Release
 
@@ -13,9 +13,15 @@ permissions:
   contents: read
 
 jobs:
+  # The fork's ci.yml, its tests and its IPA build: a release goes out only when they pass.
+  # ./ rather than $/, which actionlint 1.7.12 does not know yet.
+  ci: # zizmor: ignore[self-repository]
+    uses: ./.github/workflows/ci.yml
+
   # Builds the IPA from the tag, with neither a secret nor a token that can write: building runs
-  # the project's code and its dependencies'. The fork has no tests of its own to run first.
+  # the project's code and its dependencies'.
   build:
+    needs: ci
     runs-on: macos-26
     timeout-minutes: 120
     steps:
