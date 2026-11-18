@@ -48,6 +48,14 @@ Each item was a compile or launch failure with the versions above.
   The release build's whole-module optimization then runs as one compiler
   process for tens of minutes with no output; it is not stuck while that
   process uses CPU.
+- **Newer Xcode 26.x too.** Main also has to build with the Xcode 26 releases
+  after 26.3: GitHub's macOS runners default to the newest (26.6 on
+  2026-11-17). Xcode 26.6's type checker gave up on the optical depth step of
+  `WeatherSkyGeometry.sunTransmittance` written as one expression ("unable to
+  type-check this expression in reasonable time"), which 26.3 compiles; it is
+  split into typed parts, the same terms in the same order. The fork's CI and
+  release pin Xcode 26.3 (`DEVELOPER_DIR` in `.github/workflows/`), as on the
+  Mac mini, and the runners keep 26.0 to 26.6 side by side.
 - **Metal Toolchain.** Xcode 26.3 does not ship the Metal compiler; the build
   fails with "cannot execute tool 'metal' due to missing Metal Toolchain".
   Install it once with `xcodebuild -downloadComponent MetalToolchain` (about
