@@ -134,11 +134,13 @@ extension Ghostty {
         }
 
         var activeModifier: ModTapModifier? {
-            state?.phase == .held ? rule?.holdAction : nil
+            state?.phase == .held && rule?.holdKey == nil ? rule?.holdAction : nil
         }
 
+        /// Another key while the source is pending. A modifier hold applies to
+        /// it; a key hold means the source was typed, so its tap goes first.
         func noteChordUse() {
-            if state?.useInChord() == true { didResolveHold() }
+            if state?.useInChord() == true { didResolveHold(byChord: true) }
         }
 
         /// `keyCode` is the physical key whose release resolves the press.
@@ -152,14 +154,14 @@ extension Ghostty {
             self.rule = rule
             state = ModTapState(
                 sourceKey: sourceKey,
-                holdModifier: rule.holdAction.uiKeyModifierFlag,
+                holdModifier: rule.holdKey == nil ? rule.holdAction.uiKeyModifierFlag : [],
                 startedAt: ProcessInfo.processInfo.systemUptime,
                 threshold: Double(rule.holdThresholdMs) / 1000
             )
             let currentGeneration = generation
             let workItem = DispatchWorkItem { [weak self] in
                 guard let self, self.generation == currentGeneration else { return }
-                self.noteChordUse()
+                if self.state?.useInChord() == true { self.didResolveHold(byChord: false) }
             }
             thresholdWorkItem = workItem
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(rule.holdThresholdMs) / 1000, execute: workItem)
@@ -185,12 +187,18 @@ extension Ghostty {
         }
 
         private func advanceThreshold() {
-            if state?.advance(to: ProcessInfo.processInfo.systemUptime) == true { didResolveHold() }
+            if state?.advance(to: ProcessInfo.processInfo.systemUptime) == true { didResolveHold(byChord: false) }
         }
 
-        private func didResolveHold() {
+        private func didResolveHold(byChord: Bool) {
             cancelTimer()
             guard let rule else { return }
+            if let holdKey = rule.holdKey {
+                // The source's release then resolves as a hold and sends nothing more.
+                onSourceKeyResolved?(rule, !byChord)
+                onTapAction?(byChord ? rule.tapAction : .sendKey(holdKey))
+                return
+            }
             onSourceKeyResolved?(rule, true)
             onModifierChanged?(rule.holdAction)
         }

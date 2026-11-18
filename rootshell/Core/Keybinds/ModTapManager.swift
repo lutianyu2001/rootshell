@@ -443,6 +443,10 @@ struct ModTapRule: Identifiable, Codable, Hashable, Sendable {
     var sourceKey: ModTapSourceKey
     var tapAction: ModTapAction
     var holdAction: ModTapModifier
+    /// When set, holding sends this key once the threshold passes instead of
+    /// applying `holdAction`. Optional so rules saved before it decode as
+    /// modifier holds, and builds that predate it fall back to `holdAction`.
+    var holdKey: ModTapKeyAction?
     var holdThresholdMs: Int
     var isEnabled: Bool
 
@@ -451,6 +455,7 @@ struct ModTapRule: Identifiable, Codable, Hashable, Sendable {
         sourceKey: ModTapSourceKey,
         tapAction: ModTapAction,
         holdAction: ModTapModifier,
+        holdKey: ModTapKeyAction? = nil,
         holdThresholdMs: Int = 200,
         isEnabled: Bool = true
     ) {
@@ -458,6 +463,7 @@ struct ModTapRule: Identifiable, Codable, Hashable, Sendable {
         self.sourceKey = sourceKey
         self.tapAction = tapAction
         self.holdAction = holdAction
+        self.holdKey = holdKey
         self.holdThresholdMs = holdThresholdMs
         self.isEnabled = isEnabled
     }
@@ -479,8 +485,20 @@ struct ModTapRule: Identifiable, Codable, Hashable, Sendable {
         holdAction: .control
     )
 
+    /// Grave → ` on tap, Escape on hold
+    static let graveGraveEsc = ModTapRule(
+        sourceKey: .grave,
+        tapAction: .sendSequence("`"),
+        holdAction: .control,
+        holdKey: .escape
+    )
+
+    var holdDisplayName: String {
+        holdKey?.displayName ?? holdAction.displayName
+    }
+
     var summaryText: String {
-        "\(sourceKey.displayName) → \(tapAction.displayName) / \(holdAction.displayName)"
+        "\(sourceKey.displayName) → \(tapAction.displayName) / \(holdDisplayName)"
     }
 }
 
