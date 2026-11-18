@@ -8,8 +8,9 @@ gives up the iPhone Duo hinge and fold support instead, which this fork does not
 use. The changes came from the branch `compat/xcode-26.3`.
 
 What builds there: the sandboxed Mac Catalyst app (`rootshell-AppStore`),
-unsigned, which then runs on that Mac. What does not: iOS device builds (they
-need a signing team) and the iOS Simulator (see below).
+unsigned, which then runs on that Mac, and the iOS Simulator app, with the
+prebuilt frameworks relabelled for x86_64 (see below). What does not: iOS
+device builds (they need a signing team).
 
 - **Merging upstream into main:** upstream keeps adding code for the iOS 27.1
   SDK. After each merge, build with Xcode 26.3 and wrap whatever new code fails
@@ -64,14 +65,81 @@ Each item was a compile or launch failure with the versions above.
   `MetalToolchain-17C7003j.exportedBundle`; install that later with
   `xcodebuild -importComponent MetalToolchain -importPath <BUNDLE>`.
 
-## Why Mac Catalyst and not the Simulator
+## The iOS Simulator on an Intel Mac
 
 On an Intel Mac the Simulator runs x86_64, and the prebuilt frameworks have
 only an arm64 simulator slice (GhosttyKit, HelixKit, ios_system, vim, curl and
-others), so the app fails to link. `MainThreadStackSampler` also reads ARM
-registers and only compiles on arm64. Every framework has an x86_64 Mac
-Catalyst slice, and the terminal and reconnect code is shared, so the Catalyst
-app exercises the same paths.
+others). Every one of them has an x86_64 Mac Catalyst slice, though, and that
+code runs in the Simulator once it is labelled for it.
+`scripts/old-xcode/build-simulator.sh <WORK_DIR> <SIMULATOR_UDID>` does it all:
+
+- It resolves the packages into `<WORK_DIR>/spm-pristine`, which only the
+  relabelling reads: a build with the overrides removes the overridden packages
+  from its own package directory.
+- `x86_64-simulator/sim-x86_64-frameworks.sh` takes each xcframework without an
+  x86_64 Simulator slice, sets the platform of the Catalyst x86_64 code from Mac
+  Catalyst (6) to iOS Simulator (7) in every `LC_BUILD_VERSION`
+  (`macho_platform.py`), and merges it into the Simulator slice. Dynamic
+  frameworks also get their macOS load paths made flat (`Versions/A/`,
+  `/System/iOSSupport` dropped), and a Swift module gets x86_64 interfaces copied
+  from the arm64 Simulator ones.
+- macOS headers pick variants such as `_opendir$INODE64` that the Simulator's
+  libSystem does not export (64-bit inodes are the iOS default, so `_opendir`
+  is the same function). `macho_imports.py` renames those imports in place, in
+  symbol tables, chained fixups and dyld bind opcodes alike; variants the
+  Simulator has (`_realpath$DARWIN_EXTSN`, `_select$1050`) stay.
+- Each changed package is copied to `<WORK_DIR>/sim/overrides/<package>` with
+  its binary targets pointing at the local copies, and
+  `<WORK_DIR>/sim/rootshell-sim.xcworkspace` holds the project and these
+  packages, which override the remote ones. The script builds that workspace.
+- `MainThreadStackSampler` reads ARM registers, so it gets the Catalyst stub on
+  x86_64 too.
+
+On 2026-11-17 this covered 18 xcframeworks in 13 packages and the app built
+and ran in an iPhone 17 Pro Simulator (iOS 26.3). Re-run the script after a
+package update, which brings new arm64-only frameworks.
+
+What the Simulator cannot do there: a terminal. The Simulator renders Metal on
+the Mac's GPU, and on the Mac mini's Intel UHD 630 the Metal Simulator fails on
+Ghostty's workload ("encountered a fatal error while deserializing or
+re-encoding a Metal Simulator workload"); SimMetalHost aborts and the app dies.
+Screens without a terminal work: settings, connection sheets, and the keyboard
+toolbar above the system keyboard, which the SSH tab's Quick Connect field
+shows. Test the terminal itself in the Catalyst app, which renders on the real
+GPU.
+
+The keyboard toolbar does not exist in the Catalyst app: macOS shows no input
+accessory views, and the setting that keeps the toolbar with a hardware
+keyboard is compiled out there.
+
+## Driving the Simulator with idb
+
+idb taps and reads a Simulator's UI, but its releases (v1.7.8) ship an arm64
+`idb_companion` only, and Homebrew does not build it from source.
+`scripts/old-xcode/build-idb.sh <WORK_DIR>` builds it for x86_64: it clones
+v1.7.8, builds XcodeGen with SwiftPM and fetches protobuf's x86_64 `protoc`,
+patches idb (`x86_64-simulator/patch-idb.py`: `ARCHS=x86_64`, x86_64 in the
+private framework stubs, two closures Swift 6.2.4 rejects), and builds the
+companion, its shims and the simulator bridge.
+
+Then start the companion and install the client:
+
+```bash
+<WORK_DIR>/idb/Build/Products/Release/idb_companion --udid <SIMULATOR_UDID> --grpc-port 10882 &
+pip install fb-idb
+scripts/old-xcode/simtap.py --list          # labels and frames of what is on screen
+scripts/old-xcode/simtap.py <LABEL>...       # tap elements by accessibility label, in order
+```
+
+`keyecho_sshd.py <PORT> <LOG>` is an SSH server (paramiko) that accepts any
+login and echoes, in visible form (`^[OP`), every byte the terminal sends, so a
+key press can be checked against the sequence it should send.
+
+To set a setting before launch, edit the plist in the app's data container
+(`xcrun simctl get_app_container <UDID> com.kk2.rootshell data`, then
+`Library/Preferences/com.kk2.rootshell.plist`) while the app is not running;
+`simctl spawn defaults write` writes the Simulator's global domain, which the
+app does not read.
 
 ## Running an unsigned build
 
@@ -127,6 +195,7 @@ the connection sheet, and the test would wait for a click.
 - `screencapture` run over SSH needs Screen Recording for
   `/usr/libexec/sshd-keygen-wrapper`. Without it, it fails silently and captures
   only the wallpaper and the menu bar, which looks like an app with no window.
+  The grant can be written into the system TCC database only with SIP off.
 - To see whether the app has windows without a screenshot, list them with
   `CGWindowListCopyWindowInfo` for its PID; to see where it is stuck,
   `sample <PID> 1`.

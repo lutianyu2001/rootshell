@@ -19,12 +19,12 @@ import Foundation
 import Darwin
 import os
 
-#if targetEnvironment(macCatalyst)
+#if targetEnvironment(macCatalyst) || !arch(arm64)
 
-// Mac Catalyst ships a universal (arm64 + x86_64) binary, but this sampler
-// reads ARM64 register state and walks the ARM frame chain — it can't build
-// on x86_64. Lifecycle debug isn't used on macOS, so stub the API out
-// entirely and let the call sites stay untouched.
+// Mac Catalyst ships a universal (arm64 + x86_64) binary, and an Intel Mac's
+// Simulator runs x86_64, but this sampler reads ARM64 register state and walks
+// the ARM frame chain — it can't build on x86_64. Lifecycle debug isn't used on
+// macOS, so stub the API out entirely and let the call sites stay untouched.
 final class MainThreadStackSampler: Sendable {
     nonisolated static let shared = MainThreadStackSampler()
     private init() {}
