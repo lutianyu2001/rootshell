@@ -2331,6 +2331,8 @@ extension Notification.Name {
     static let openSettings = Notification.Name("com.rootshell.openSettings")
     static let duplicateTabWithSSH = Notification.Name("com.rootshell.duplicateTabWithSSH")
     static let createLocalShell = Notification.Name("com.rootshell.createLocalShell")
+    /// A local shell tab whatever New Tab Action is set to.
+    static let newLocalShellTab = Notification.Name("com.rootshell.newLocalShellTab")
     static let browseHosts = Notification.Name("com.rootshell.browseHosts")
     static let browseProfiles = Notification.Name("com.rootshell.browseProfiles")
     static let openConnectionProfile = Notification.Name("com.rootshell.openConnectionProfile")

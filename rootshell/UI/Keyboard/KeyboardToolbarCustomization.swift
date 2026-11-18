@@ -86,7 +86,9 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
     case dictation
     case choosePaneToZoom
     case togglePaneZoom
+    case newTab
     case duplicateTab
+    case newLocalShell
 
     // Toggles (1)
     case drawerToggle
@@ -159,7 +161,9 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
         case .dictation: return String(localized: "Dictation")
         case .choosePaneToZoom: return String(localized: "Choose Pane to Zoom")
         case .togglePaneZoom: return String(localized: "Toggle Pane Zoom")
+        case .newTab: return String(localized: "New Tab")
         case .duplicateTab: return String(localized: "Duplicate Focused Tab")
+        case .newLocalShell: return String(localized: "Local Shell")
         case .drawerToggle: return String(localized: "Drawer Toggle")
         }
     }
@@ -199,7 +203,9 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
         case .dictation: return "mic"
         case .choosePaneToZoom: return "number.square"
         case .togglePaneZoom: return "arrow.up.left.and.down.right.magnifyingglass"
-        case .duplicateTab: return "plus.rectangle.on.rectangle"
+        case .newTab: return "plus.rectangle.on.rectangle"
+        case .duplicateTab: return "square.on.square"
+        case .newLocalShell: return "terminal"
         case .drawerToggle: return "ellipsis"
         default: return nil
         }
@@ -280,7 +286,9 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
         case .dictation: return "__dictation__"
         case .choosePaneToZoom: return "__choosePaneToZoom__"
         case .togglePaneZoom: return "__togglePaneZoom__"
+        case .newTab: return "__newTab__"
         case .duplicateTab: return "__duplicateTab__"
+        case .newLocalShell: return "__newLocalShell__"
         case .drawerToggle: return "__extraDrawer__"
         }
     }
@@ -378,7 +386,7 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
         case .dismiss, .tabSwitcher, .compose, .writingAssistance, .toolbarSettings, .paste, .voiceAgent,
              .toggleFullScreen, .toggleTabBar, .newConnection, .appSettings,
              .toggleMouseCapture, .aiAgent, .brightnessBoost, .typePassword, .clipboardManager, .fileManager, .httpCapture, .dictation,
-             .choosePaneToZoom, .togglePaneZoom, .duplicateTab: return .action
+             .choosePaneToZoom, .togglePaneZoom, .newTab, .duplicateTab, .newLocalShell: return .action
         case .drawerToggle: return .toggle
         default: return .symbol
         }
@@ -555,7 +563,9 @@ struct ToolbarLayoutConfig: Equatable, Sendable {
             .builtIn(.choosePaneToZoom),
             .builtIn(.togglePaneZoom),
             .builtIn(.newConnection),
+            .builtIn(.newTab),
             .builtIn(.duplicateTab),
+            .builtIn(.newLocalShell),
             .builtIn(.toggleMouseCapture),
             .builtIn(.aiAgent),
             .builtIn(.brightnessBoost),
@@ -625,7 +635,9 @@ struct ToolbarLayoutConfig: Equatable, Sendable {
             .builtIn(.choosePaneToZoom),
             .builtIn(.togglePaneZoom),
             .builtIn(.newConnection),
+            .builtIn(.newTab),
             .builtIn(.duplicateTab),
+            .builtIn(.newLocalShell),
             .builtIn(.toggleMouseCapture),
             .builtIn(.aiAgent),
             .builtIn(.brightnessBoost),
