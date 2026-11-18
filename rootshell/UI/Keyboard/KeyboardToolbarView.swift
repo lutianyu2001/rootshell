@@ -433,6 +433,9 @@ class KeyboardToolbarView: UIView {
     var onChoosePaneToZoomRequested: (() -> Void)?
     var onTogglePaneZoomRequested: (() -> Void)?
 
+    /// Callback when the duplicate focused tab button is tapped
+    var onDuplicateTabRequested: (() -> Void)?
+
     /// Callback when new connection button is tapped
     var onNewConnectionRequested: (() -> Void)?
 
@@ -960,7 +963,7 @@ class KeyboardToolbarView: UIView {
             let button = KeyboardSymbolButton(key: keyID.keyValue, display: .icon("mic"), sizes: sizes)
             button.delegate = self
             return button
-        case .choosePaneToZoom, .togglePaneZoom:
+        case .choosePaneToZoom, .togglePaneZoom, .duplicateTab:
             let button = KeyboardSymbolButton(key: keyID.keyValue, display: .icon(keyID.iconName ?? ""), sizes: sizes)
             button.accessibilityLabel = keyID.displayName
             button.delegate = self
@@ -1868,6 +1871,10 @@ extension KeyboardToolbarView: KeyboardButtonDelegate {
         }
         if key == KeyID.togglePaneZoom.keyValue {
             onTogglePaneZoomRequested?()
+            return
+        }
+        if key == KeyID.duplicateTab.keyValue {
+            onDuplicateTabRequested?()
             return
         }
         if key == KeyID.dictation.keyValue {

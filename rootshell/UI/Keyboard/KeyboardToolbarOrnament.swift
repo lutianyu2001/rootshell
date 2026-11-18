@@ -98,6 +98,12 @@ struct KeyboardToolbarRepresentable: UIViewRepresentable {
             NotificationCenter.default.post(name: .togglePaneZoom, object: pane)
         }
 
+        toolbar.onDuplicateTabRequested = { [weak coordinator] in
+            // The pane, not the toolbar, identifies the window with several open.
+            guard let pane = coordinator?.focusedPane else { return }
+            NotificationCenter.default.post(name: .duplicateTabWithSSH, object: pane)
+        }
+
         toolbar.onNewConnectionRequested = { [weak toolbar] in
             NotificationCenter.default.post(name: .newTab, object: toolbar)
         }

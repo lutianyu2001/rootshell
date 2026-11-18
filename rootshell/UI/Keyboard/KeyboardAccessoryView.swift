@@ -99,6 +99,12 @@ class KeyboardAccessoryView: UIInputView {
         }
     }
 
+    var onDuplicateTabRequested: (() -> Void)? {
+        didSet {
+            toolbarView.onDuplicateTabRequested = onDuplicateTabRequested
+        }
+    }
+
     /// Callback when new connection button is tapped
     var onNewConnectionRequested: (() -> Void)? {
         didSet {
