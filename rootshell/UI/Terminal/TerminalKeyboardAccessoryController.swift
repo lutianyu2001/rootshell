@@ -1263,6 +1263,21 @@ final class TerminalKeyboardAccessoryController: NSObject {
             NotificationCenter.default.post(name: .togglePaneZoom, object: host.keyboardHostView)
         }
 
+        keyboardAccessory?.onNewTabRequested = { [weak host] in
+            guard let host else { return }
+            NotificationCenter.default.post(name: .createLocalShell, object: host.keyboardHostView)
+        }
+
+        keyboardAccessory?.onDuplicateTabRequested = { [weak host] in
+            guard let host else { return }
+            NotificationCenter.default.post(name: .duplicateTabWithSSH, object: host.keyboardHostView)
+        }
+
+        keyboardAccessory?.onNewLocalShellRequested = { [weak host] in
+            guard let host else { return }
+            NotificationCenter.default.post(name: .newLocalShellTab, object: host.keyboardHostView)
+        }
+
         keyboardAccessory?.onNewConnectionRequested = { [weak host] in
             guard let host else { return }
             NotificationCenter.default.post(name: .newTab, object: host.keyboardHostView)
