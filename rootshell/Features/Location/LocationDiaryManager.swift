@@ -338,6 +338,7 @@ class LocationDiaryManager: NSObject, ObservableObject {
             let entry = LocationDiaryEntry(
                 timestamp: Date(),
                 coordinate: location.coordinate,
+                horizontalAccuracy: location.horizontalAccuracy,
                 addressState: .resolved(cached.address),
                 retryCount: 0
             )
@@ -351,6 +352,7 @@ class LocationDiaryManager: NSObject, ObservableObject {
         let entry = LocationDiaryEntry(
             timestamp: Date(),
             coordinate: location.coordinate,
+            horizontalAccuracy: location.horizontalAccuracy,
             addressState: .resolving,
             retryCount: 0
         )

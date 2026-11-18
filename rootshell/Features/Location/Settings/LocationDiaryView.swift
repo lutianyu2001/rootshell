@@ -1,9 +1,11 @@
 import SwiftUI
+import UIKit
 import CoreLocation
 
 struct LocationDiaryView: View {
     @Environment(\.sheetThemeColors) private var sheetThemeColors
     @ObservedObject var manager = LocationDiaryManager.shared
+    @State private var showingTrackMap = false
 
     var body: some View {
         List {
@@ -68,6 +70,8 @@ struct LocationDiaryView: View {
                             .italic()
                             .themedRow()
                     } else {
+                        trackMapRow
+
                         ForEach(manager.entries.reversed()) { entry in
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack {
@@ -137,6 +141,57 @@ struct LocationDiaryView: View {
         .themedList()
         .navigationTitle("Location Diary")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingTrackMap) {
+            LocationTrackMapSheet(manager: manager)
+                .frame(idealWidth: Self.halfWindowWidth)
+                .themedSubSheet(sheetThemeColors)
+                // On iPad: as tall as a page sheet, half the window wide.
+                // iPhone ignores the sizing and shows a sheet as tall as Settings.
+                .presentationSizing(.page.fitted(horizontal: true, vertical: false))
+        }
+    }
+
+    /// Half the width of the foreground window, not below a readable minimum.
+    private static var halfWindowWidth: CGFloat? {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        guard let window = scene?.keyWindow ?? scene?.windows.first else { return nil }
+        let width = window.bounds.width
+        return max(width / 2, 360)
+    }
+
+    private var trackMapRow: some View {
+        Button {
+            showingTrackMap = true
+        } label: {
+            HStack(spacing: 12) {
+                LocationTrackThumbnail(entries: manager.entries)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Track")
+                    pointCountText
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Show Track on Map"))
+        .padding(.vertical, 4)
+        .themedRow()
+    }
+
+    private var pointCountText: Text {
+        let count = manager.entries.count
+        return count == 1 ? Text("1 point") : Text("\(count) points")
     }
 
     private var authorizationStatusText: String {
