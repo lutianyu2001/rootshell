@@ -6,6 +6,10 @@
 #
 # Usage: scripts/sideload/build-ipa.sh <DERIVED_DATA_DIR> <OUTPUT_IPA> [<PACKAGES_DIR>]
 #
+# IPA_BUILD_SETTINGS, when set, adds build settings (KEY=VALUE, separated by spaces) to the build:
+# CI passes SWIFT_OPTIMIZATION_LEVEL=-Onone SWIFT_COMPILATION_MODE=singlefile to check that the IPA
+# builds without the release's whole-module optimization, which can take an hour.
+#
 # Package downloads authenticate from ~/.netrc when it has api.github.com: unauthenticated,
 # GitHub's API refuses (403) the binary targets' downloads once its rate limit is reached.
 set -euo pipefail
@@ -35,10 +39,11 @@ OUT=$(cd "$(dirname "$2")" && pwd)/$(basename "$2")
 PKG=${3:-$DD/packages}
 XCODE_ARGS=(-project "$PROJECT" -scheme "$SCHEME" -configuration "$CONFIGURATION"
   -destination generic/platform=iOS -packageAuthorizationProvider netrc)
+read -r -a EXTRA_SETTINGS <<< "${IPA_BUILD_SETTINGS:-}"
 
 cd "$ROOT"
 xcodebuild "${XCODE_ARGS[@]}" -derivedDataPath "$DD" -clonedSourcePackagesDirPath "$PKG" \
-  CODE_SIGNING_ALLOWED=NO build
+  CODE_SIGNING_ALLOWED=NO ${EXTRA_SETTINGS[@]+"${EXTRA_SETTINGS[@]}"} build
 
 APP=$DD/Build/Products/$CONFIGURATION-iphoneos/$APP_NAME.app
 [ -d "$APP" ] || { echo "no app at $APP" >&2; exit 1; }

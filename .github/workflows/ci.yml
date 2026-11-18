@@ -86,5 +86,9 @@ jobs:
             xcodebuild -downloadComponent MetalToolchain
           fi
 
+      # Without the release's whole-module optimization, which takes an hour for a large app: this
+      # checks that the IPA builds and signs, release.yml builds the optimized one.
       - name: Build the IPA
+        env:
+          IPA_BUILD_SETTINGS: SWIFT_OPTIMIZATION_LEVEL=-Onone SWIFT_COMPILATION_MODE=singlefile
         run: scripts/sideload/build-ipa.sh "$RUNNER_TEMP/derived" "$RUNNER_TEMP/ci-ios.ipa"
