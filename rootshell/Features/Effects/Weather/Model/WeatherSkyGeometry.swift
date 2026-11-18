@@ -88,9 +88,11 @@ nonisolated enum WeatherSkyGeometry {
             let p = origin + d * ((Double(i) + 0.5) * dt)
             let h = (p * p).sum().squareRoot() - earth
             let ozone = max(0, 1 - abs(h - 25_000) / 15_000)
-            depth += (SIMD3(5.802e-6, 13.558e-6, 33.1e-6) * exp(-h / 8_000)
-                      + SIMD3(repeating: 4.40e-6 * exp(-h / 1_200))
-                      + SIMD3(0.650e-6, 1.881e-6, 0.085e-6) * ozone) * dt
+            // Typed parts: Xcode 26.6's type checker gives up on the expression written as one.
+            let rayleigh: SIMD3<Double> = SIMD3(5.802e-6, 13.558e-6, 33.1e-6) * exp(-h / 8_000)
+            let mie = SIMD3<Double>(repeating: 4.40e-6 * exp(-h / 1_200))
+            let ozoneAbsorption: SIMD3<Double> = SIMD3(0.650e-6, 1.881e-6, 0.085e-6) * ozone
+            depth += (rayleigh + mie + ozoneAbsorption) * dt
         }
         return SIMD3(Float(exp(-depth.x)), Float(exp(-depth.y)), Float(exp(-depth.z)))
     }
