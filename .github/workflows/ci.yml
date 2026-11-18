@@ -4,11 +4,18 @@
 # (scripts/sideload/build-ipa.sh). By hand: the same xcodebuild test command, and the script.
 name: CI
 
+# A change to docs alone builds nothing, so it runs no checks.
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   workflow_call:
   workflow_dispatch:
 
