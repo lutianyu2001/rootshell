@@ -3788,6 +3788,7 @@ extension Ghostty {
                 #endif
                 return
             }
+            scheduleToolbarKeyTestIfRequested()
             
             registerWindowFocusObservers()
             updateHerdrGatewayOverlay()
