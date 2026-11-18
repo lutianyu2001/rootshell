@@ -1,0 +1,86 @@
+# The fork's checks: on a push to main, on a pull request, by hand (gh workflow run ci.yml --ref
+# <branch>), and from release.yml before a release,
+# run the logic unit tests (rootshellTests) on an iOS simulator and build the SideStore IPA
+# (scripts/sideload/build-ipa.sh). By hand: the same xcodebuild test command, and the script.
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# The Xcode the fork is built with, as on the Mac mini (docs/old-xcode-compat.md); the runner
+# image keeps several.
+env:
+  DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Unauthenticated, GitHub's API refuses (403) the Swift packages' binary downloads once the
+      # runner's shared rate limit is used up; this run's read-only token lifts it.
+      - name: Authenticate Swift package downloads
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          umask 077
+          printf 'machine api.github.com login x-access-token password %s\n' "$TOKEN" > ~/.netrc
+
+      - name: Show the Xcode version
+        run: xcodebuild -version
+
+      # The newest available iPhone simulator.
+      - name: Run rootshellTests
+        run: |
+          udid=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          for runtime in sorted((r for r in devices if ".iOS-" in r), reverse=True):
+              for device in devices[runtime]:
+                  if device["name"].startswith("iPhone"):
+                      print(device["udid"])
+                      sys.exit()
+          sys.exit("no iPhone simulator")
+          ')
+          xcodebuild test -project rootshell.xcodeproj -scheme rootshellTests \
+            -destination "id=$udid" -packageAuthorizationProvider netrc CODE_SIGNING_ALLOWED=NO
+
+  ipa:
+    runs-on: macos-26
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Unauthenticated, GitHub's API refuses (403) the Swift packages' binary downloads once the
+      # runner's shared rate limit is used up; this run's read-only token lifts it.
+      - name: Authenticate Swift package downloads
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          umask 077
+          printf 'machine api.github.com login x-access-token password %s\n' "$TOKEN" > ~/.netrc
+
+      # The Metal shaders need Xcode's Metal Toolchain, a separate download.
+      - name: Install the Metal Toolchain
+        run: |
+          xcodebuild -version
+          if ! xcodebuild -showComponent MetalToolchain 2>/dev/null | grep -q 'Status: installed'; then
+            xcodebuild -downloadComponent MetalToolchain
+          fi
+
+      - name: Build the IPA
+        run: scripts/sideload/build-ipa.sh "$RUNNER_TEMP/derived" "$RUNNER_TEMP/rootshell-ci-ios.ipa"

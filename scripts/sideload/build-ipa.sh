@@ -3,6 +3,9 @@
 # under a free Apple ID. See docs/sideload.md.
 #
 # Usage: scripts/sideload/build-ipa.sh <DERIVED_DATA_DIR> <OUTPUT_IPA> [<PACKAGES_DIR>]
+#
+# Package downloads authenticate from ~/.netrc when it has api.github.com: unauthenticated,
+# GitHub's API refuses (403) the binary targets' downloads once its rate limit is reached.
 set -euo pipefail
 if [ $# -lt 2 ]; then
   echo "usage: $0 <DERIVED_DATA_DIR> <OUTPUT_IPA> [<PACKAGES_DIR>]" >&2
@@ -16,7 +19,7 @@ PKG=${3:-$DD/packages}
 
 cd "$ROOT"
 xcodebuild -project rootshell.xcodeproj -scheme rootshell-AppStore -configuration ReleaseAppStore \
-  -destination generic/platform=iOS -derivedDataPath "$DD" -clonedSourcePackagesDirPath "$PKG" \
+  -destination generic/platform=iOS -packageAuthorizationProvider netrc -derivedDataPath "$DD" -clonedSourcePackagesDirPath "$PKG" \
   CODE_SIGNING_ALLOWED=NO build
 
 APP=$DD/Build/Products/ReleaseAppStore-iphoneos/rootshell.app
@@ -34,7 +37,7 @@ rm -rf "$STAGE/Payload/rootshell.app/PlugIns/VPNTunnelExtension.appex" \
 # filled in from the build settings: SideStore reads them from the signature to
 # know what to request when it re-signs, and an unsigned app asks for nothing.
 xcodebuild -project rootshell.xcodeproj -scheme rootshell-AppStore -configuration ReleaseAppStore \
-  -destination generic/platform=iOS -showBuildSettings -json 2>/dev/null > "$STAGE/settings.json"
+  -destination generic/platform=iOS -packageAuthorizationProvider netrc -showBuildSettings -json 2>/dev/null > "$STAGE/settings.json"
 python3 "$ROOT/scripts/sideload/render-entitlements.py" "$STAGE/settings.json" \
   rootshell/Entitlements/AppStore.entitlements "$STAGE/app.entitlements"
 python3 "$ROOT/scripts/sideload/render-entitlements.py" "$STAGE/settings.json" \

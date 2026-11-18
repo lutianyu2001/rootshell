@@ -1,6 +1,6 @@
-# The release of the sideloading IPA: pushing a version tag builds an IPA, signed ad hoc only, on
-# macOS and creates the GitHub release with it, to be installed with SideStore (docs/sideload.md). This file
-# holds all of the fork's releasing. By hand: scripts/sideload/build-ipa.sh, then gh release create
+# The release of the sideloading IPA: pushing a version tag runs ci.yml, then builds an IPA, signed
+# ad hoc only, on macOS and creates the GitHub release with it, to be installed with SideStore
+# (docs/sideload.md). This file holds all of the fork's releasing. By hand: scripts/sideload/build-ipa.sh, then gh release create
 # with the IPA.
 name: Release
 
@@ -12,16 +12,36 @@ on:
 permissions:
   contents: read
 
+# The Xcode the fork is built with, as on the Mac mini (docs/old-xcode-compat.md); the runner
+# image keeps several.
+env:
+  DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+
 jobs:
+  # The fork's ci.yml, its tests and its IPA build: a release goes out only when they pass.
+  # ./ rather than $/, which actionlint 1.7.12 does not know yet.
+  ci: # zizmor: ignore[self-repository]
+    uses: ./.github/workflows/ci.yml
+
   # Builds the IPA from the tag, with neither a secret nor a token that can write: building runs
-  # the project's code and its dependencies'. The fork has no tests of its own to run first.
+  # the project's code and its dependencies'.
   build:
+    needs: ci
     runs-on: macos-26
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      # Unauthenticated, GitHub's API refuses (403) the Swift packages' binary downloads once the
+      # runner's shared rate limit is used up; this run's read-only token lifts it.
+      - name: Authenticate Swift package downloads
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          umask 077
+          printf 'machine api.github.com login x-access-token password %s\n' "$TOKEN" > ~/.netrc
 
       # The Metal shaders need Xcode's Metal Toolchain, a separate download.
       - name: Install the Metal Toolchain
