@@ -499,6 +499,11 @@ extension MainView {
             self.handleNewTabCommand()
         }
 
+        observerBag.observeOnMainActor(.newLocalShellTab) { [self] notification in
+            guard self.shouldHandleNotification(notification) else { return }
+            self.createLocalShellTab(for: self.captureNewTabRequest())
+        }
+
         observerBag.observeOnMainActor(.browseHosts) { [self] notification in
             // Handle both UIKeyCommand (with terminal) and SwiftUI Commands (nil object)
             guard self.shouldHandleNotification(notification) else { return }

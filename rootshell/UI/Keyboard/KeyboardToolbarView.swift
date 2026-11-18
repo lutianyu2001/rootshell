@@ -433,8 +433,10 @@ class KeyboardToolbarView: UIView {
     var onChoosePaneToZoomRequested: (() -> Void)?
     var onTogglePaneZoomRequested: (() -> Void)?
 
-    /// Callback when the duplicate focused tab button is tapped
+    /// Callbacks for the new tab, duplicate focused tab and local shell buttons
+    var onNewTabRequested: (() -> Void)?
     var onDuplicateTabRequested: (() -> Void)?
+    var onNewLocalShellRequested: (() -> Void)?
 
     /// Callback when new connection button is tapped
     var onNewConnectionRequested: (() -> Void)?
@@ -963,7 +965,7 @@ class KeyboardToolbarView: UIView {
             let button = KeyboardSymbolButton(key: keyID.keyValue, display: .icon("mic"), sizes: sizes)
             button.delegate = self
             return button
-        case .choosePaneToZoom, .togglePaneZoom, .duplicateTab:
+        case .choosePaneToZoom, .togglePaneZoom, .newTab, .duplicateTab, .newLocalShell:
             let button = KeyboardSymbolButton(key: keyID.keyValue, display: .icon(keyID.iconName ?? ""), sizes: sizes)
             button.accessibilityLabel = keyID.displayName
             button.delegate = self
@@ -1873,8 +1875,16 @@ extension KeyboardToolbarView: KeyboardButtonDelegate {
             onTogglePaneZoomRequested?()
             return
         }
+        if key == KeyID.newTab.keyValue {
+            onNewTabRequested?()
+            return
+        }
         if key == KeyID.duplicateTab.keyValue {
             onDuplicateTabRequested?()
+            return
+        }
+        if key == KeyID.newLocalShell.keyValue {
+            onNewLocalShellRequested?()
             return
         }
         if key == KeyID.dictation.keyValue {

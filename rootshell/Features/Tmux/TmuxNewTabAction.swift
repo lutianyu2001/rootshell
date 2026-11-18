@@ -45,7 +45,7 @@ nonisolated enum NewTabAction: String, CaseIterable, Codable, Sendable {
     var iconName: String {
         switch self {
         case .localShell: return "terminal"
-        case .duplicateFocused: return "plus.rectangle.on.rectangle"
+        case .duplicateFocused: return "square.on.square"
         case .ask: return "questionmark.circle"
         }
     }
