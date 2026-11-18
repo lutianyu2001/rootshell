@@ -81,6 +81,21 @@ struct ModTapSettingsView: View {
                         }
                     }
                     .themedRow()
+
+                    Button {
+                        manager.rules.append(.graveGraveEsc)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            // Verbatim: a string literal is Markdown, and its backticks would make a code span.
+                            Text(verbatim: "` \u{2192} ` / Esc")
+                                .font(.body)
+                            Text(String(localized: "Tap types `, hold for Escape",
+                                        comment: "Mod-tap preset: the grave key types itself on tap, Escape on hold"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .themedRow()
                 } header: {
                     Text("Quick Setup")
                 } footer: {
@@ -142,7 +157,7 @@ struct ModTapRuleRow: View {
                     Label(rule.tapAction.displayName, systemImage: "hand.tap")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Label(rule.holdAction.displayName, systemImage: "hand.point.down")
+                    Label(rule.holdDisplayName, systemImage: "hand.point.down")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -184,6 +199,27 @@ struct ModTapRuleDetailView: View {
         let initial = manager.rules.first { $0.id == ruleID }
             ?? ModTapRule(sourceKey: fallbackSourceKey, tapAction: .sendKey(.escape), holdAction: .control)
         self._rule = State(initialValue: initial)
+    }
+
+    /// A hold either applies a modifier or sends a key.
+    private enum HoldChoice: Hashable {
+        case modifier(ModTapModifier)
+        case key(ModTapKeyAction)
+    }
+
+    private var holdChoice: Binding<HoldChoice> {
+        Binding(
+            get: { rule.holdKey.map(HoldChoice.key) ?? .modifier(rule.holdAction) },
+            set: { choice in
+                switch choice {
+                case .modifier(let modifier):
+                    rule.holdAction = modifier
+                    rule.holdKey = nil
+                case .key(let key):
+                    rule.holdKey = key
+                }
+            }
+        )
     }
 
     var body: some View {
@@ -229,9 +265,22 @@ struct ModTapRuleDetailView: View {
             }
 
             Section {
-                Picker("Modifier", selection: $rule.holdAction) {
-                    ForEach(ModTapModifier.allCases, id: \.self) { mod in
-                        Text(mod.displayName).tag(mod)
+                Picker("Action", selection: holdChoice) {
+                    Section {
+                        ForEach(ModTapModifier.allCases, id: \.self) { mod in
+                            Text(mod.displayName).tag(HoldChoice.modifier(mod))
+                        }
+                    } header: {
+                        Text("Modifier")
+                    }
+                    ForEach(ModTapKeyAction.Category.allCases, id: \.self) { category in
+                        Section {
+                            ForEach(ModTapKeyAction.cases(in: category), id: \.self) { key in
+                                Text(key.displayName).tag(HoldChoice.key(key))
+                            }
+                        } header: {
+                            Text(category.displayName)
+                        }
                     }
                 }
                 .pickerStyle(.menu)

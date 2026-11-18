@@ -27,6 +27,15 @@ final class ModTapStateTests: XCTestCase {
                        .keyboardNonUSBackslash)
     }
 
+    func testKeyHoldLeavesChordModifiersAlone() {
+        // A grave source that sends Escape on hold has no modifier to substitute.
+        var state = ModTapState(sourceKey: .keyboardGraveAccentAndTilde, holdModifier: [], startedAt: 10, threshold: 0.2)
+        XCTAssertTrue(state.advance(to: 10.3))
+        XCTAssertEqual(state.phase, .held)
+        XCTAssertEqual(state.modifiers(hardware: .shift, originalShortcutIsBound: false, heldKeys: []), .shift)
+        XCTAssertEqual(state.resolution(onRelease: .keyboardGraveAccentAndTilde), .hold)
+    }
+
     func testOlderKeyReleaseDoesNotConsumePendingTap() {
         for source: UIKeyboardHIDUsage in [.keyboardCapsLock, .keyboardLeftGUI] {
             let state = ModTapState(sourceKey: source, holdModifier: .control, startedAt: 10, threshold: 0.2)

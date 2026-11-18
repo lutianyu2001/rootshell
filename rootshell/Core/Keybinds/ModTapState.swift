@@ -40,12 +40,13 @@ struct ModTapState {
 
     /// Match the original shortcut first. An unbound chord substitutes the
     /// source modifier instead of accumulating both source and hold modifiers.
+    /// A hold that sends a key (empty `holdModifier`) changes no modifiers.
     func modifiers(
         hardware: UIKeyModifierFlags,
         originalShortcutIsBound: Bool,
         heldKeys: Set<UIKeyboardHIDUsage>
     ) -> UIKeyModifierFlags {
-        guard phase == .held, !originalShortcutIsBound else { return hardware }
+        guard phase == .held, !originalShortcutIsBound, !holdModifier.isEmpty else { return hardware }
         var result = hardware
         if let sourceModifier = Self.modifierFlag(for: sourceKey),
            !heldKeys.contains(where: { $0 != sourceKey && Self.modifierFlag(for: $0) == sourceModifier }) {
