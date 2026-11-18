@@ -618,8 +618,14 @@ extension Ghostty.TerminalView {
 
     /// Points reconnect and relaunch at the zmx session this pane switched to.
     func recordZmxResumeTarget(sessionName: String) {
-        guard let target = MuxSessionTarget(type: .zmx, sessionName: sessionName),
-              let resuming = connectionConfig.resumingMultiplexer(target) else { return }
+        guard let target = MuxSessionTarget(type: .zmx, sessionName: sessionName) else { return }
+        recordMultiplexerResumeTarget(target)
+    }
+
+    /// Points reconnect and relaunch at `target`, so they reattach it instead
+    /// of starting over in a shell.
+    func recordMultiplexerResumeTarget(_ target: MuxSessionTarget) {
+        guard let resuming = connectionConfig.resumingMultiplexer(target) else { return }
         connectionConfig = resuming
     }
 
@@ -1027,11 +1033,14 @@ extension Ghostty.TerminalView {
         // Wrap in sh -c for portability across all login shells (bash, zsh, fish, csh).
         // $PATH expands inside sh, not the outer shell.
         let attachCommand: String
+        let resumeTarget: MuxSessionTarget?
         switch session.type {
         case .tmux:
             let controlMode = tmuxDiscoveryAttachMode == .control && allowsTmuxControlDiscoveryAttach
             let cc = controlMode ? "-CC " : ""
             attachCommand = "tmux \(cc)attach -t \"\(escapedName)\""
+            // The command names no socket, so it reaches the default server.
+            resumeTarget = MuxSessionTarget(type: .tmux, sessionName: session.name, controlMode: controlMode)
             // Control mode projects each pane onto its own surface, so only a
             // plain attach turns this one surface into a multi-window view.
             if !controlMode {
@@ -1039,6 +1048,7 @@ extension Ghostty.TerminalView {
             }
         case .zellij:
             attachCommand = "zellij attach \"\(escapedName)\""
+            resumeTarget = MuxSessionTarget(type: .zellij, sessionName: session.name)
             bindRawMultiplexer(.zellij, sessionName: session.name)
         case .herdr:
             // Control mode keeps this shell and drives herdr over its own
@@ -1051,12 +1061,14 @@ extension Ghostty.TerminalView {
             // Attach-or-create: resurrects a stopped session by spawning its
             // server. "default" is the literal name of the default session.
             attachCommand = "herdr session attach \"\(escapedName)\""
+            resumeTarget = MuxSessionTarget(type: .herdr, sessionName: session.name)
             bindRawMultiplexer(.herdr, sessionName: session.name)
         case .zmx:
             // zmx is transparent, so preserve its identity without suppressing
             // the inner program's agent state. Clear the prefix because the
             // discovered name is already the fully resolved socket name.
             attachCommand = "ZMX_SESSION_PREFIX= zmx attach \"\(escapedName)\""
+            resumeTarget = MuxSessionTarget(type: .zmx, sessionName: session.name)
             bindPassthroughMultiplexer(.zmx, sessionName: session.name)
 
             // Use the reported directory until OSC 7 provides a fresher value.
@@ -1076,6 +1088,11 @@ extension Ghostty.TerminalView {
         }
         if let data = command.data(using: .utf8) {
             sendUserInput(data)
+        }
+        // Like an auto-started multiplexer, a session picked here is what a
+        // reconnect or relaunch should come back to, not the shell under it.
+        if let resumeTarget {
+            recordMultiplexerResumeTarget(resumeTarget)
         }
         dismissSessionDiscovery()
     }
