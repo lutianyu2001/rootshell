@@ -901,20 +901,10 @@ class KeyboardToolbarView: UIView {
 
     private func createButtonForKeyID(_ keyID: KeyID) -> UIView? {
         switch keyID {
-        case .esc, .ctrl, .alt, .shift, .cmd:
+        case .ctrl, .alt, .shift, .cmd:
             return createModifierButton(for: keyID.keyDefinition)
-        case .tab:
-            return createTabButton()
         case .arrowDrawerToggle:
             return createArrowDrawerToggleButton()
-        case .arrowUp:
-            return createArrowButton(icon: "arrow.up", key: "\u{1B}[A")
-        case .arrowDown:
-            return createArrowButton(icon: "arrow.down", key: "\u{1B}[B")
-        case .arrowLeft:
-            return createArrowButton(icon: "arrow.left", key: "\u{1B}[D")
-        case .arrowRight:
-            return createArrowButton(icon: "arrow.right", key: "\u{1B}[C")
         case .dismiss:
             return usesHostChrome ? nil : createDismissButton()
         case .tabSwitcher:
@@ -968,9 +958,20 @@ class KeyboardToolbarView: UIView {
         case .drawerToggle:
             return createExtraKeysDrawerToggleButton()
         default:
-            // Symbol keys — single character text buttons
-            return createTextButton(text: keyID.keyValue)
+            // Esc, Tab, the arrows and F1-F12 send a key; symbols type their character.
+            return keyID.category == .key ? createKeyButton(for: keyID) : createTextButton(text: keyID.keyValue)
         }
+    }
+
+    /// A key the toolbar sends as it is: Esc, Tab, an arrow or F1-F12. Esc keeps
+    /// the wide size it had beside the modifiers.
+    private func createKeyButton(for keyID: KeyID) -> KeyboardSymbolButton {
+        let display: KeyboardSymbolButton.DisplayType = keyID.iconName.map { .icon($0) } ?? .text(keyID.keyLabel)
+        let button = KeyboardSymbolButton(key: keyID.keyValue, display: display, isWide: keyID == .esc, sizes: sizes)
+        button.delegate = self
+        button.shouldAutoRepeat = keyID.repeatsWhenHeld
+        button.accessibilityLabel = keyID.displayName
+        return button
     }
 
     private func createCustomKeyButton(uuid: UUID) -> UIView? {
@@ -1010,9 +1011,6 @@ class KeyboardToolbarView: UIView {
         let systemImage: String?
 
         switch keyDef {
-        case .esc:
-            title = "Esc"
-            systemImage = "escape"
         case .ctrl:
             title = "Ctrl"
             systemImage = "control"
@@ -1052,17 +1050,6 @@ class KeyboardToolbarView: UIView {
         }
 
         modifierButtons.append(button)
-        return button
-    }
-
-    private func createTabButton() -> KeyboardSymbolButton {
-        let button = KeyboardSymbolButton(
-            key: "\t",
-            display: .icon("arrow.right.to.line"),
-            sizes: sizes
-        )
-        button.delegate = self
-        button.shouldAutoRepeat = true
         return button
     }
 

@@ -2,7 +2,7 @@
 //  KeyboardModifierButton.swift
 //  rootshell
 //
-//  Modifier keys with three-state sticky behavior (Ctrl, Alt, Cmd, Shift, Esc)
+//  Modifier keys with three-state sticky behavior (Ctrl, Alt, Cmd, Shift)
 //  Single tap = one-shot (applies to next key then auto-clears)
 //  Double tap or hold = locked (stays on until tapped off)
 //  Hold a locked modifier = unlock and press it twice on its own
@@ -267,12 +267,6 @@ class KeyboardModifierButton: KeyboardButton {
     }
 
     override func sendKey() {
-        // Esc fires immediately, never enters sticky cycle
-        if key == "Esc" {
-            delegate?.keyPressed("\u{1B}", modifiers: [])
-            return
-        }
-
         let now = CFAbsoluteTimeGetCurrent()
         let elapsed = now - lastTapTimestamp
 

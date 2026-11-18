@@ -436,7 +436,7 @@ final class ToolbarLayoutEditorController: UIViewController {
     private func badgeImage(for slot: KeySlot) -> UIImage? {
         switch slot {
         case .builtIn(let keyID):
-            return chipImage(symbolName: keyID.iconName, text: keyID.iconName == nil ? keyID.keyValue : nil)
+            return chipImage(symbolName: keyID.iconName, text: keyID.iconName == nil ? keyID.keyLabel : nil)
         case .custom(let uuid):
             guard let key = manager.customKey(for: uuid) else { return nil }
             return chipImage(symbolName: key.iconName, text: key.iconName == nil ? String(key.label.prefix(2)) : nil)
