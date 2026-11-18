@@ -32,6 +32,7 @@ import UIKit
 struct ToolbarLayoutEditor: UIViewControllerRepresentable {
     var manager: KeyboardToolbarManager
     var themeColors: SheetThemeColors?
+    var keyLabelSet: ToolbarKeyLabelSet
     var capacity: Int
     @Binding var contentHeight: CGFloat
     @Environment(\.editMode) private var editMode
@@ -51,6 +52,7 @@ struct ToolbarLayoutEditor: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: ToolbarLayoutEditorController, context: Context) {
         // Theme changes are handled by the controller's themeColors didSet.
         controller.themeColors = themeColors
+        controller.keyLabelSet = keyLabelSet
         controller.capacity = capacity
         controller.setEditing(editMode?.wrappedValue.isEditing ?? false)
         controller.applySnapshot(animated: true)
@@ -67,6 +69,14 @@ final class ToolbarLayoutEditorController: UIViewController {
         didSet {
             guard isViewLoaded, themeColors != oldValue else { return }
             applyTheme()
+            reconfigureAllItems()
+        }
+    }
+
+    /// Redraws the key badges when the toolbar's key labels change.
+    var keyLabelSet: ToolbarKeyLabelSet = .standard {
+        didSet {
+            guard isViewLoaded, keyLabelSet != oldValue else { return }
             reconfigureAllItems()
         }
     }
@@ -436,7 +446,8 @@ final class ToolbarLayoutEditorController: UIViewController {
     private func badgeImage(for slot: KeySlot) -> UIImage? {
         switch slot {
         case .builtIn(let keyID):
-            return chipImage(symbolName: keyID.iconName, text: keyID.iconName == nil ? keyID.keyLabel : nil)
+            let iconName = manager.keyLabelSet.iconName(for: keyID)
+            return chipImage(symbolName: iconName, text: iconName == nil ? keyID.keyLabel : nil)
         case .custom(let uuid):
             guard let key = manager.customKey(for: uuid) else { return nil }
             return chipImage(symbolName: key.iconName, text: key.iconName == nil ? String(key.label.prefix(2)) : nil)

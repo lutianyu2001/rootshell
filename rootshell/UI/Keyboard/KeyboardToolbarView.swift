@@ -964,9 +964,10 @@ class KeyboardToolbarView: UIView {
     }
 
     /// A key the toolbar sends as it is: Esc, Tab, an arrow or F1-F12. Esc keeps
-    /// the wide size it had beside the modifiers.
+    /// the wide size it had beside the modifiers; the key label set picks icon or text.
     private func createKeyButton(for keyID: KeyID) -> KeyboardSymbolButton {
-        let display: KeyboardSymbolButton.DisplayType = keyID.iconName.map { .icon($0) } ?? .text(keyID.keyLabel)
+        let iconName = KeyboardToolbarManager.shared.keyLabelSet.iconName(for: keyID)
+        let display: KeyboardSymbolButton.DisplayType = iconName.map { .icon($0) } ?? .text(keyID.keyLabel)
         let button = KeyboardSymbolButton(key: keyID.keyValue, display: display, isWide: keyID == .esc, sizes: sizes)
         button.delegate = self
         button.shouldAutoRepeat = keyID.repeatsWhenHeld

@@ -44,6 +44,7 @@ struct KeyboardToolbarSettingsView: View {
             toolbarLayoutSection
             customKeysSection
             drawerBehaviorSection
+            keyLabelsSection
             hiddenKeysSection
             relatedSection
             resetSection
@@ -97,6 +98,7 @@ struct KeyboardToolbarSettingsView: View {
         ToolbarLayoutEditor(
             manager: manager,
             themeColors: sheetThemeColors,
+            keyLabelSet: manager.keyLabelSet,
             capacity: capacity,
             contentHeight: $editorContentHeight
         )
@@ -209,6 +211,25 @@ struct KeyboardToolbarSettingsView: View {
             return String(localized: "Each press of the ••• button reveals one more drawer row; when all are open, the next press closes them. \"Open Drawer by Default\" opens the first row when the keyboard appears.")
         case .cycle:
             return String(localized: "Each press of the ••• button swaps the drawer row's contents to the next set of keys, then closes. \"Open Drawer by Default\" opens the first row when the keyboard appears.")
+        }
+    }
+
+    // MARK: - Key Labels Section
+
+    private var keyLabelsSection: some View {
+        Section {
+            Picker("Key Labels", selection: Binding(
+                get: { manager.keyLabelSet },
+                set: { manager.keyLabelSet = $0 }
+            )) {
+                ForEach(ToolbarKeyLabelSet.allCases, id: \.self) { set in
+                    Text(set.displayName).tag(set)
+                }
+            }
+            .themedRow()
+            .settingContextMenu(Settings.KeyboardToolbar.keyLabelSet)
+        } footer: {
+            Text("Text Esc shows Esc as text instead of the escape glyph, easier to tell apart beside F1-F12 and other text keys. Other keys keep their default look.")
         }
     }
 
@@ -331,7 +352,7 @@ struct KeyboardToolbarSettingsView: View {
 
     @ViewBuilder
     private func keyBadge(for keyID: KeyID) -> some View {
-        if let iconName = keyID.iconName {
+        if let iconName = manager.keyLabelSet.iconName(for: keyID) {
             Image(systemName: iconName)
                 .font(.caption)
                 .foregroundStyle(.tint)
