@@ -14,7 +14,7 @@ import UIKit
 
 /// Identifies a built-in toolbar key. Raw values are stable — never rename or remove a shipped case.
 enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
-    // Modifiers (5)
+    // Modifiers (4), plus Esc, which sends a key like Tab, the arrows and F1-F12
     case esc
     case ctrl
     case alt
@@ -205,7 +205,7 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
     /// The character or key value string this key sends
     var keyValue: String {
         switch self {
-        case .esc: return "Esc"
+        case .esc: return "\u{1B}"
         case .ctrl: return "Ctrl"
         case .alt: return "Alt"
         case .shift: return "Shift"
@@ -334,32 +334,62 @@ enum KeyID: String, Codable, CaseIterable, Hashable, Sendable {
         }
     }
 
-    /// Whether this key is a modifier (esc/ctrl/alt/shift/cmd)
-    var isModifier: Bool {
+    /// Short text for the key when it shows no icon: the character of a
+    /// symbol, the name of a key it sends (Esc, Tab, F1), the full name otherwise.
+    var keyLabel: String {
         switch self {
-        case .esc, .ctrl, .alt, .shift, .cmd: return true
+        case .esc: return "Esc"
+        case .tab: return "Tab"
+        case .arrowUp: return "\u{2191}"     // ↑
+        case .arrowDown: return "\u{2193}"   // ↓
+        case .arrowLeft: return "\u{2190}"   // ←
+        case .arrowRight: return "\u{2192}"  // →
+        default: return category == .symbol || category == .key ? keyValue : displayName
+        }
+    }
+
+    /// Whether holding the key repeats it, as Tab and the arrows do.
+    var repeatsWhenHeld: Bool {
+        switch self {
+        case .tab, .arrowUp, .arrowDown, .arrowLeft, .arrowRight: return true
         default: return false
         }
     }
 
-    /// Category for grouping in settings UI
+    /// Whether this key is a sticky modifier (ctrl/alt/shift/cmd)
+    var isModifier: Bool {
+        switch self {
+        case .ctrl, .alt, .shift, .cmd: return true
+        default: return false
+        }
+    }
+
+    /// What kind of key this is; decides how the toolbars build and send it.
     var category: KeyCategory {
         switch self {
-        case .esc, .ctrl, .alt, .shift, .cmd: return .modifier
-        case .tab: return .special
-        case .arrowDrawerToggle, .arrowUp, .arrowDown, .arrowLeft, .arrowRight: return .navigation
+        case .ctrl, .alt, .shift, .cmd: return .modifier
+        case .esc, .tab, .arrowUp, .arrowDown, .arrowLeft, .arrowRight,
+             .f1, .f2, .f3, .f4, .f5, .f6, .f7, .f8, .f9, .f10, .f11, .f12: return .key
+        case .arrowDrawerToggle: return .navigation
         case .dismiss, .tabSwitcher, .compose, .writingAssistance, .toolbarSettings, .paste, .voiceAgent,
              .toggleFullScreen, .toggleTabBar, .newConnection, .appSettings,
              .toggleMouseCapture, .aiAgent, .brightnessBoost, .typePassword, .clipboardManager, .fileManager, .httpCapture, .dictation,
              .choosePaneToZoom, .togglePaneZoom: return .action
         case .drawerToggle: return .toggle
-        case .f1, .f2, .f3, .f4, .f5, .f6, .f7, .f8, .f9, .f10, .f11, .f12: return .function
         default: return .symbol
         }
     }
 
     enum KeyCategory: String, Sendable {
-        case modifier, special, navigation, symbol, function, action, toggle
+        /// Ctrl, Option, Shift and Cmd: sticky, they change the next key.
+        case modifier
+        /// Esc, Tab, the arrows and F1-F12: send `keyValue` as a key, with any active modifiers.
+        case key
+        /// The arrow joystick.
+        case navigation
+        /// A character typed as text.
+        case symbol
+        case action, toggle
     }
 
     /// 1 through 12 for a function key name ("F1" … "F12"), the value the

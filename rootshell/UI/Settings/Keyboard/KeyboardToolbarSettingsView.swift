@@ -339,7 +339,7 @@ struct KeyboardToolbarSettingsView: View {
                 .background(sheetThemeColors?.rowBackground ?? Color(uiColor: .tertiarySystemGroupedBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
         } else {
-            Text(keyID.keyValue)
+            Text(keyID.keyLabel)
                 .font(.system(.caption, design: .monospaced))
                 .foregroundStyle(.tint)
                 .frame(width: 28, height: 28)

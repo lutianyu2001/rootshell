@@ -1242,12 +1242,10 @@ final class TerminalTouchKeyboardView: UIView, KeyboardButtonDelegate, UIGesture
                 let action: Model.Action
                 let title: String
                 switch id {
-                case .esc: action = .key("\u{1b}"); title = "Esc"
                 case .ctrl: action = .modifier(.control); title = "Ctrl"
                 case .alt: action = .modifier(.alt); title = "Alt"
                 case .shift: action = .modifier(.shift); title = "Shift"
                 case .cmd: action = .modifier(.command); title = "Cmd"
-                case .tab: action = .key("\t"); title = "Tab"
                 case .arrowDrawerToggle: action = .joystick; title = id.displayName
                 case .drawerToggle: action = .drawer; title = "…"
                 case .dismiss: action = .dismiss; title = id.displayName
@@ -1255,9 +1253,11 @@ final class TerminalTouchKeyboardView: UIView, KeyboardButtonDelegate, UIGesture
                 case .compose: action = .compose; title = id.displayName
                 case .paste: action = .paste; title = id.displayName
                 default:
-                    title = id.category == .symbol || id.category == .function ? id.keyValue : id.displayName
-                    action = id.category == .symbol ? .text(id.keyValue)
-                        : (id.category == .navigation || id.category == .function ? .key(id.keyValue) : .toolbar(id.keyValue))
+                    switch id.category {
+                    case .symbol: action = .text(id.keyValue); title = id.keyLabel
+                    case .key: action = .key(id.keyValue); title = id.keyLabel
+                    default: action = .toolbar(id.keyValue); title = id.displayName
+                    }
                 }
                 return Model.Key(title: title, action: action, symbol: id.iconName, accessibility: id.displayName)
             }
