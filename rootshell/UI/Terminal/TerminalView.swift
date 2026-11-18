@@ -3590,13 +3590,24 @@ extension Ghostty {
 
         #if !targetEnvironment(macCatalyst)
         private func handleInputModeChange() {
+            let logger = InputMethodDebugLogger.shared
+            logger.log("input mode changed: system=\(super.textInputMode?.primaryLanguage ?? "nil") "
+                + "effective=\(textInputMode?.primaryLanguage ?? "nil") firstResponder=\(isFirstResponder)")
             guard isFirstResponder else { return }
 
             refreshHardwareInputSourceSwitchAvailability()
 
             // Switching input source can re-populate the system Shortcuts bar;
             // re-clear so the language pill stays hidden across Globe presses.
-            clearInputAssistantsRecursively()
+            // After the switch has settled: clearing the assistant bar while
+            // UIKit is still presenting the new source makes it lay out again.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.isFirstResponder else { return }
+                let start = ProcessInfo.processInfo.systemUptime
+                let cleared = self.clearInputAssistantsRecursively()
+                logger.log("cleared input assistants on \(cleared) views in "
+                    + String(format: "%.1f ms", (ProcessInfo.processInfo.systemUptime - start) * 1000))
+            }
 
             let newLang = textInputMode?.primaryLanguage
             guard newLang != lastInputModePrimaryLanguage else { return }
@@ -3613,7 +3624,12 @@ extension Ghostty {
 
             guard let lang = newLang else { return }
             let displayName = Locale.current.localizedString(forIdentifier: lang) ?? lang
-            showInputModeOverlay(displayName)
+            // Also after the switch: building the overlay's hosting controller
+            // is main-thread work the new input source does not need to wait for.
+            DispatchQueue.main.async { [weak self] in
+                self?.showInputModeOverlay(displayName)
+                logger.log("showed input mode overlay \(lang)")
+            }
         }
 
         private func refreshHardwareInputSourceSwitchAvailability() {
@@ -4178,26 +4194,35 @@ extension Ghostty {
             ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 18
         }()
 
+        // Assign only when there is something to clear: UIKit reads this item
+        // often, and each assignment, even of an empty array, updates the bar.
         override var inputAssistantItem: UITextInputAssistantItem {
             let item = super.inputAssistantItem
             #if !os(visionOS)
             if Self.suppressLanguagePill {
-                item.leadingBarButtonGroups = []
-                item.trailingBarButtonGroups = []
+                if !item.leadingBarButtonGroups.isEmpty { item.leadingBarButtonGroups = [] }
+                if !item.trailingBarButtonGroups.isEmpty { item.trailingBarButtonGroups = [] }
             }
             #endif
             return item
         }
 
-        private func clearInputAssistantsRecursively(_ view: UIView? = nil) {
+        /// Returns how many views it visited.
+        @discardableResult
+        private func clearInputAssistantsRecursively(_ view: UIView? = nil) -> Int {
             #if !os(visionOS)
-            guard Self.suppressLanguagePill else { return }
+            guard Self.suppressLanguagePill else { return 0 }
             let root = view ?? self
-            root.inputAssistantItem.leadingBarButtonGroups = []
-            root.inputAssistantItem.trailingBarButtonGroups = []
+            let item = root.inputAssistantItem
+            if !item.leadingBarButtonGroups.isEmpty { item.leadingBarButtonGroups = [] }
+            if !item.trailingBarButtonGroups.isEmpty { item.trailingBarButtonGroups = [] }
+            var visited = 1
             for subview in root.subviews {
-                clearInputAssistantsRecursively(subview)
+                visited += clearInputAssistantsRecursively(subview)
             }
+            return visited
+            #else
+            return 0
             #endif
         }
 
