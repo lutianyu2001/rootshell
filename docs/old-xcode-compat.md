@@ -160,14 +160,32 @@ signs it ad hoc. What it works around:
 
 ## Test switches
 
-Each is off unless its environment variable is `1`. Pass them with
-`open -n --env NAME=1 <APP>`.
+Each is off unless its environment variable is set (`1`, or for
+`ROOTSHELL_TEST_TOOLBAR_KEYS` a list of keys). Pass them with
+`open -n --env NAME=<VALUE> <APP>`.
 
 | Variable | Effect |
 |---|---|
 | `ROOTSHELL_TEST_TRUST_ALL_HOSTKEYS` | SSH tabs accept any host key. They validate in `CitadelHostKeyValidatorDelegate`; `SSHHostKeyDelegate` is a different path. |
 | `ROOTSHELL_TEST_NO_CLOUDKIT` | Skips the CloudKit calls at launch. |
 | `ROOTSHELL_TEST_CONNECT_URL` | An `ssh://` URL without history connects at once instead of opening the connection sheet. |
+| `ROOTSHELL_TEST_TOOLBAR_KEYS` | Toolbar keys as `KeyID` raw values with optional `ctrl+`, `alt+`, `shift+`, `cmd+` prefixes, comma-separated (`esc,f1,ctrl+f5`). 15 s after the last terminal appears, each goes through that terminal's toolbar `keyPressed` with the value its button sends, 0.5 s apart. Progress goes to `toolbar-key-test.log` in the app's temporary directory. |
+
+## The toolbar key test
+
+The Catalyst app shows no keyboard toolbar, and the Simulator cannot open a
+terminal on this Mac, so `scripts/old-xcode/toolbar-key-test.sh <APP>
+<WORK_DIR>` drives the toolbar from inside: it starts `keyecho_sshd.py`,
+launches the app with `ROOTSHELL_TEST_TOOLBAR_KEYS` listing Esc, Tab, the
+arrows, F1-F12 and five modified function keys, opens an `ssh://` URL to the
+server, and compares what arrived for each key with the sequence it should
+send. It exits 0 when all match. Only the tap on the button is skipped; the
+key goes through the toolbar, the terminal view and Ghostty's encoder to a real
+SSH connection.
+
+On 2026-11-18 all 23 keys matched. Ghostty writes a modified F3 as
+`CSI 13;<mods> ~`, not xterm's `CSI 1;<mods> R`, which reads like a cursor
+position report.
 
 ## The reconnect test
 
