@@ -513,6 +513,11 @@ final class MultiplexerExposeFeed: MuxPreviewFrameSource {
     private func notePassthroughFocus(tabID: String) {
         guard let terminal, let type, !type.ownsAlternateScreen else { return }
         terminal.passthroughMultiplexer = .init(type: type, sessionName: tabID)
+        // The leader-routed switch moved this pane's client as surely as a
+        // swap does, so reconnect must follow it too.
+        if type == .zmx {
+            terminal.recordZmxResumeTarget(sessionName: tabID)
+        }
 
         // Seed the title because zmx may not replay one for a new session.
         guard sessionName != tabID else { return }

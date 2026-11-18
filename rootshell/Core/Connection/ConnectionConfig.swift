@@ -81,6 +81,25 @@ enum ConnectionConfig: Equatable {
         }
     }
 
+    /// This connection set to reattach `target` when it reconnects or is
+    /// relaunched, or nil for connection types that start from scratch each
+    /// time (local shells, shell-launched sessions) and so have nowhere to
+    /// keep it.
+    func resumingMultiplexer(_ target: MuxSessionTarget) -> ConnectionConfig? {
+        switch self {
+        case .ssh(let config):
+            return .ssh(config.resumingMultiplexer(target))
+        case .trzsz(var config):
+            config.sshConfig = config.sshConfig.resumingMultiplexer(target)
+            return .trzsz(config)
+        case .mosh(var config):
+            config.sshConfig = config.sshConfig.resumingMultiplexer(target)
+            return .mosh(config)
+        default:
+            return nil
+        }
+    }
+
     /// Display name for UI
     var displayName: String {
         switch self {

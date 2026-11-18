@@ -618,16 +618,9 @@ extension Ghostty.TerminalView {
 
     /// Points reconnect and relaunch at the zmx session this pane switched to.
     func recordZmxResumeTarget(sessionName: String) {
-        guard let target = MuxSessionTarget(type: .zmx, sessionName: sessionName) else { return }
-        switch connectionConfig {
-        case .ssh(let config):
-            connectionConfig = .ssh(config.resumingMultiplexer(target))
-        case .trzsz(var config):
-            config.sshConfig = config.sshConfig.resumingMultiplexer(target)
-            connectionConfig = .trzsz(config)
-        default:
-            break
-        }
+        guard let target = MuxSessionTarget(type: .zmx, sessionName: sessionName),
+              let resuming = connectionConfig.resumingMultiplexer(target) else { return }
+        connectionConfig = resuming
     }
 
     /// Maps a configured command to the multiplexer it starts, or nil when it
