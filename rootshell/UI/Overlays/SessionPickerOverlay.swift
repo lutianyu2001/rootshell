@@ -160,6 +160,10 @@ struct SessionPickerOverlay: View {
                 .frame(maxWidth: isNarrow ? .infinity : 540)
                 .frame(height: fittedCardHeight)
                 .overlayCardBackground()
+                // The glass or material background takes no taps, so without
+                // this a tap on the card's empty parts reached the backdrop
+                // and dismissed the picker.
+                .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .padding(.horizontal, isNarrow ? 12 : 32)
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity)
@@ -201,6 +205,16 @@ struct SessionPickerOverlay: View {
                     .padding(.vertical, 2)
                     .background(.fill.tertiary, in: Capsule())
             }
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 26, height: 26)
+                    .background(.fill.tertiary, in: Circle())
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Close"))
         }
         .padding(.horizontal, compact ? 16 : 20)
         .padding(.top, compact ? 14 : 18)
