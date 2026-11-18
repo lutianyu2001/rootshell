@@ -105,20 +105,21 @@ struct ModTapSettingsView: View {
                         SettingPinTag(Settings.Keybinds.modTapRules.erased)
                     }
                 }
+            }
 
-                if let sourceKey = nextAvailableSourceKey {
-                    Section {
-                        Button {
-                            manager.rules.append(ModTapRule(
-                                sourceKey: sourceKey,
-                                tapAction: sourceKey.defaultTapAction,
-                                holdAction: .control
-                            ))
-                        } label: {
-                            Label("Add Rule", systemImage: "plus")
-                        }
-                        .themedRow()
+            // Also offered beside the presets, so a custom rule needs no preset first.
+            if let sourceKey = nextAvailableSourceKey {
+                Section {
+                    Button {
+                        manager.rules.append(ModTapRule(
+                            sourceKey: sourceKey,
+                            tapAction: sourceKey.defaultTapAction,
+                            holdAction: .control
+                        ))
+                    } label: {
+                        Label("Add Rule", systemImage: "plus")
                     }
+                    .themedRow()
                 }
             }
         }
