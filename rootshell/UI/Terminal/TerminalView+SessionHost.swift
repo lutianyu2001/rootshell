@@ -119,8 +119,9 @@ extension Ghostty.TerminalView: TerminalSessionControllerHost {
         }
         #endif
 
-        // Reconnection starts outside any picker-attached passthrough session;
-        // configured bindings are restored when the new session becomes ready.
+        // The new session starts from the connection config: a session picked
+        // or switched to was recorded there as its resume target, and its
+        // binding is restored from it when the new session becomes ready.
         self.passthroughMultiplexer = nil
         self.localMultiplexerAttachment = nil
         self.localMultiplexerRecoveryTask?.cancel()
