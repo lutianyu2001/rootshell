@@ -1336,27 +1336,40 @@ class CatalystAppDelegate: AppDelegate {
         builder.insertChild(releasingRemoteScreenKeyEquivalents(editMenu), atEndOfMenu: .edit)
     }
 
+    /// A menu item with `action`'s current single-chord shortcut, or none.
+    /// AppKit matches menu key equivalents before any UIKeyCommand, so an
+    /// item keeping a fixed chord swallows a binding that took it over (⌘0
+    /// with the number row as F1-F12 on ⌘). `preferring` picks the key shown
+    /// when the action has several chords (⌘+ over ⌘=).
+    private func boundMenuCommand(
+        title: String, selector: Selector, action: KeybindAction, preferring key: KeyCode? = nil
+    ) -> UIMenuElement {
+        let bindings = KeybindManager.shared.activeBindings.filter { $0.action == action && !$0.sequence.isSequence }
+        guard let trigger = (bindings.first { $0.sequence.first?.key == key } ?? bindings.first)?.sequence.first else {
+            return UICommand(title: title, action: selector)
+        }
+        return UIKeyCommand(title: title, action: selector, input: trigger.uiKeyInput,
+                            modifierFlags: trigger.uiModifierFlags)
+    }
+
     private func buildViewMenuItems(_ builder: UIMenuBuilder) {
         // Font size commands — injected into system View menu
-        let increaseFont = UIKeyCommand(
+        let increaseFont = boundMenuCommand(
             title: String(localized: "Increase Font Size"),
-            action: #selector(UIApplication.ghostty_increaseFontSize(_:)),
-            input: "+",
-            modifierFlags: [.command]
+            selector: #selector(UIApplication.ghostty_increaseFontSize(_:)),
+            action: .increase_font_size, preferring: .plus
         )
 
-        let decreaseFont = UIKeyCommand(
+        let decreaseFont = boundMenuCommand(
             title: String(localized: "Decrease Font Size"),
-            action: #selector(UIApplication.ghostty_decreaseFontSize(_:)),
-            input: "-",
-            modifierFlags: [.command]
+            selector: #selector(UIApplication.ghostty_decreaseFontSize(_:)),
+            action: .decrease_font_size
         )
 
-        let resetFont = UIKeyCommand(
+        let resetFont = boundMenuCommand(
             title: String(localized: "Reset Font Size"),
-            action: #selector(UIApplication.ghostty_resetFontSize(_:)),
-            input: "0",
-            modifierFlags: [.command]
+            selector: #selector(UIApplication.ghostty_resetFontSize(_:)),
+            action: .reset_font_size
         )
 
         let fontGroup = UIMenu(title: "", options: .displayInline, children: [

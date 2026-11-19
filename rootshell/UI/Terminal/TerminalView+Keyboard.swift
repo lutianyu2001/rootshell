@@ -2806,6 +2806,15 @@ extension Ghostty.TerminalView {
 
     /// Execute a keybind action with optional parameter
     func executeKeybindAction(_ action: KeybindAction, parameter: String? = nil) {
+        // F1-F12 take the toolbar's path, so Ghostty encodes them for the
+        // active keyboard protocol, together with any sticky toolbar modifiers
+        // (toolbar Shift, then ⌥⌘6, sends Shift-F6).
+        if let number = action.functionKeyNumber {
+            keyPressed("F\(number)", modifiers: activeKeyboardModifiers)
+            keyboardAccessoryController?.clearOneShotModifiers()
+            return
+        }
+
         // Handle terminal actions (sent to libghostty)
         if action.isTerminalAction {
             // Send data actions (text:/esc:/csi: from ghostty config).

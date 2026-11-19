@@ -152,6 +152,12 @@ final class KeybindCommandGenerator: ObservableObject {
         case .send_text, .send_esc, .send_csi:
             return true
 
+        // Function keys, likewise: their chords (⌥⌘1) must not reach the
+        // terminal as Option text or a system shortcut first.
+        case .function_key_1, .function_key_2, .function_key_3, .function_key_4, .function_key_5, .function_key_6,
+             .function_key_7, .function_key_8, .function_key_9, .function_key_10, .function_key_11, .function_key_12:
+            return true
+
         // Control characters don't need UIKeyCommands
         case .ctrl_a, .ctrl_b, .ctrl_c, .ctrl_d, .ctrl_e, .ctrl_f, .ctrl_g,
              .ctrl_h, .ctrl_i, .ctrl_j, .ctrl_k, .ctrl_l, .ctrl_m, .ctrl_n,

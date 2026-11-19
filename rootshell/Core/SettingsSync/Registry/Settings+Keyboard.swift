@@ -11,6 +11,7 @@ extension Ghostty.OptionKeyAsAlt: SettingValue {}
 extension DrawerToggleMode: SettingValue {}
 extension ToolbarKeyLabelSet: SettingValue {}
 extension TerminalWritingAssistanceMode: SettingValue {}
+extension FunctionKeyLayer: SettingValue {}
 extension KeyboardArrowJoystickButton.Mode: SettingValue {}
 extension TerminalTouchKeyboardModel.FloatingGlassStyle: SettingValue {}
 extension TerminalTouchKeyboardModel.Height: SettingValue {}
@@ -172,6 +173,10 @@ nonisolated extension Settings {
         static let modTapRules = SettingKey<Data?>(
             "modTapRules", default: nil, group: .keybinds,
             title: String(localized: "Mod-Tap Rules", comment: "Setting title"))
+        static let functionKeyLayer = SettingKey(
+            "keybindFunctionKeyLayer", default: FunctionKeyLayer.optionCommand, group: .keybinds,
+            configKey: "function-key-layer",
+            title: String(localized: "Number Row as F1-F12", comment: "Setting title"))
         static let externalConfigPath = SettingKey<String?>(
             "externalGhosttyConfigPath", default: nil, group: .keybinds, policy: .deviceOnly,
             title: String(localized: "Imported Config Path", comment: "Setting title"))
@@ -183,7 +188,7 @@ nonisolated extension Settings {
             title: String(localized: "Imported Config Bookmark", comment: "Setting title"))
 
         static let all: [AnySettingDefinition] = [
-            overrides.erased, modTapRules.erased, externalConfigPath.erased,
+            overrides.erased, modTapRules.erased, functionKeyLayer.erased, externalConfigPath.erased,
             externalConfigOriginalFilename.erased, externalConfigBookmark.erased,
         ]
     }

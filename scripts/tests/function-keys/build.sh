@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Assemble FKeyTest.swift from the function-key code as it stands in the repo:
 # KeyID.functionKeyNumber, Ghostty.TerminalView.functionKeyHIDUsage and
-# functionKeySequence, and KeyModifiers. Only UIKeyboardHIDUsage is stubbed,
-# with UIKit's raw values for F1-F12.
+# functionKeySequence, KeyModifiers, and the number row layer (FunctionKeyLayer
+# and the function key actions). UIKeyboardHIDUsage and UIKeyModifierFlags are
+# stubbed with UIKit's raw values, Keybind with the one initializer used.
 set -eu
 cd "$(dirname "$0")"
 R=${1:-$(git rev-parse --show-toplevel)}
@@ -19,5 +20,24 @@ R=${1:-$(git rev-parse --show-toplevel)}
   echo "enum Ghostty { enum TerminalView {"
   awk '/static func functionKeyHIDUsage/{p=1} /Navigation keys whose modified forms/{exit} p{print}' "$R/rootshell/UI/Terminal/TerminalView.swift"
   echo "} }"
+  # FunctionKeyLayer and the function key actions, with KeyCode's number row
+  # cases and KeybindModifiers taken from the source; Keybind is reduced to
+  # the initializer the layer uses.
+  echo "struct UIKeyModifierFlags: OptionSet { let rawValue: Int"
+  echo "    static let shift = Self(rawValue: 1 << 17), control = Self(rawValue: 1 << 18)"
+  echo "    static let alternate = Self(rawValue: 1 << 19), command = Self(rawValue: 1 << 20) }"
+  K="$R/rootshell/Core/Keybinds"
+  awk '/^struct KeybindModifiers: OptionSet/{p=1} p{print} p&&/^}/{exit}' "$K/KeyTrigger.swift"
+  echo "enum KeyCode: String {"
+  grep -E '^    case (digit[0-9]|minus|equal) = ' "$K/KeyTrigger.swift"
+  echo "}"
+  echo "struct Keybind { let key: KeyCode; let modifiers: KeybindModifiers; let action: KeybindAction }"
+  echo "enum KeybindAction: String {"
+  grep -E '^    case function_key_[0-9]+ = ' "$K/KeybindAction.swift"
+  awk '/1 through 12 for the function key actions/{p=1} /Category for grouping in UI/{exit} p{print}' \
+    "$K/KeybindAction.swift"
+  echo "}"
+  awk '/^enum FunctionKeyLayer/{p=1} p{print} p&&/^}/{exit}' "$K/KeybindAction.swift" \
+    | sed 's/String(localized: \("[^"]*"\), comment: "[^"]*")/\1/'
   cat main.swift
 } > FKeyTest.swift

@@ -16,6 +16,7 @@ enum KeybindCategory: String, CaseIterable, Identifiable {
     case view = "View"
     case shell = "Shell"
     case terminal = "Terminal"
+    case functionKeys = "Function Keys"
 
     var id: String { rawValue }
 
@@ -28,6 +29,7 @@ enum KeybindCategory: String, CaseIterable, Identifiable {
         case .view: return String(localized: "View", comment: "Keybind category: view options")
         case .shell: return String(localized: "Shell", comment: "Keybind category: shell actions")
         case .terminal: return String(localized: "Terminal", comment: "Keybind category: terminal actions")
+        case .functionKeys: return String(localized: "Function Keys", comment: "Keybind category: send F1-F12 to the terminal")
         }
     }
 
@@ -40,6 +42,7 @@ enum KeybindCategory: String, CaseIterable, Identifiable {
         case .view: return 4
         case .shell: return 5
         case .terminal: return 6
+        case .functionKeys: return 7
         }
     }
 }
@@ -239,6 +242,22 @@ enum KeybindAction: String, CaseIterable, Codable, Identifiable, Hashable {
     /// Send CSI sequence to terminal (prepends ESC [)
     case send_csi = "csi"
 
+    // Function keys: send F1-F12 as the key itself, so the terminal encodes
+    // it for the active keyboard protocol. For keyboards without an F-key
+    // row; FunctionKeyLayer binds them to the number row by default.
+    case function_key_1 = "function_key_1"
+    case function_key_2 = "function_key_2"
+    case function_key_3 = "function_key_3"
+    case function_key_4 = "function_key_4"
+    case function_key_5 = "function_key_5"
+    case function_key_6 = "function_key_6"
+    case function_key_7 = "function_key_7"
+    case function_key_8 = "function_key_8"
+    case function_key_9 = "function_key_9"
+    case function_key_10 = "function_key_10"
+    case function_key_11 = "function_key_11"
+    case function_key_12 = "function_key_12"
+
     // Special
     /// Explicitly unbind this action (no shortcut)
     case unbind = "unbind"
@@ -311,6 +330,17 @@ enum KeybindAction: String, CaseIterable, Codable, Identifiable, Hashable {
         }
     }
 
+    /// 1 through 12 for the function key actions; nil otherwise.
+    var functionKeyNumber: Int? {
+        guard rawValue.hasPrefix("function_key_") else { return nil }
+        return Int(rawValue.dropFirst("function_key_".count))
+    }
+
+    /// The function key action that sends F`number` (1 through 12).
+    static func functionKey(_ number: Int) -> KeybindAction? {
+        KeybindAction(rawValue: "function_key_\(number)")
+    }
+
     /// Category for grouping in UI
     var category: KeybindCategory {
         switch self {
@@ -349,6 +379,10 @@ enum KeybindAction: String, CaseIterable, Codable, Identifiable, Hashable {
              .ctrl_o, .ctrl_p, .ctrl_q, .ctrl_r, .ctrl_s, .ctrl_t, .ctrl_u,
              .ctrl_v, .ctrl_w, .ctrl_x, .ctrl_y, .ctrl_z:
             return .terminal
+
+        case .function_key_1, .function_key_2, .function_key_3, .function_key_4, .function_key_5, .function_key_6,
+             .function_key_7, .function_key_8, .function_key_9, .function_key_10, .function_key_11, .function_key_12:
+            return .functionKeys
 
         case .unbind:
             return .shell
@@ -469,6 +503,19 @@ enum KeybindAction: String, CaseIterable, Codable, Identifiable, Hashable {
         case .send_text: return String(localized: "Send Text", comment: "Keybind action: send text to terminal")
         case .send_esc: return String(localized: "Send ESC Sequence", comment: "Keybind action: send ESC sequence")
         case .send_csi: return String(localized: "Send CSI Sequence", comment: "Keybind action: send CSI sequence")
+
+        case .function_key_1: return String(localized: "Send F1", comment: "Keybind action: send function key F1")
+        case .function_key_2: return String(localized: "Send F2", comment: "Keybind action: send function key F2")
+        case .function_key_3: return String(localized: "Send F3", comment: "Keybind action: send function key F3")
+        case .function_key_4: return String(localized: "Send F4", comment: "Keybind action: send function key F4")
+        case .function_key_5: return String(localized: "Send F5", comment: "Keybind action: send function key F5")
+        case .function_key_6: return String(localized: "Send F6", comment: "Keybind action: send function key F6")
+        case .function_key_7: return String(localized: "Send F7", comment: "Keybind action: send function key F7")
+        case .function_key_8: return String(localized: "Send F8", comment: "Keybind action: send function key F8")
+        case .function_key_9: return String(localized: "Send F9", comment: "Keybind action: send function key F9")
+        case .function_key_10: return String(localized: "Send F10", comment: "Keybind action: send function key F10")
+        case .function_key_11: return String(localized: "Send F11", comment: "Keybind action: send function key F11")
+        case .function_key_12: return String(localized: "Send F12", comment: "Keybind action: send function key F12")
 
         case .unbind: return String(localized: "Unbind", comment: "Keybind action: remove binding")
         }
@@ -604,6 +651,10 @@ enum KeybindAction: String, CaseIterable, Codable, Identifiable, Hashable {
         switch self {
         case .toggle_visor, .close_tab, .new_tab, .new_window, .new_local_shell, .start_search, .toggle_compose,
              .send_text, .send_esc, .send_csi, .open_profile,
+             // Function keys are often bound to ⌥⌘ or ⌘ chords that the
+             // system or the terminal's Option encoding would otherwise take.
+             .function_key_1, .function_key_2, .function_key_3, .function_key_4, .function_key_5, .function_key_6,
+             .function_key_7, .function_key_8, .function_key_9, .function_key_10, .function_key_11, .function_key_12,
              // ⌘⌥[ / ⌘⌥]: Option composes a different character, so the menu
              // key-equivalent path can't claim the press before the terminal
              // encodes it as Alt-[; a prioritized UIKeyCommand must own it.
@@ -682,6 +733,10 @@ enum KeybindAction: String, CaseIterable, Codable, Identifiable, Hashable {
         case .toggle_visor, .reset_terminal, .send_text, .send_esc, .send_csi, .open_profile:
             return false
 
+        case .function_key_1, .function_key_2, .function_key_3, .function_key_4, .function_key_5, .function_key_6,
+             .function_key_7, .function_key_8, .function_key_9, .function_key_10, .function_key_11, .function_key_12:
+            return false
+
         // Control characters are handled separately
         case .ctrl_a, .ctrl_b, .ctrl_c, .ctrl_d, .ctrl_e, .ctrl_f, .ctrl_g,
              .ctrl_h, .ctrl_i, .ctrl_j, .ctrl_k, .ctrl_l, .ctrl_m, .ctrl_n,
@@ -691,6 +746,46 @@ enum KeybindAction: String, CaseIterable, Codable, Identifiable, Hashable {
 
         case .unbind:
             return false
+        }
+    }
+}
+
+// MARK: - Function Key Layer
+
+/// The chord that turns the number row into F1-F12 on keyboards without an
+/// F-key row: 1 through 0 send F1-F10, and - and = send F11 and F12, the keys
+/// that sit under F11 and F12 on a full keyboard. Each chord is an ordinary
+/// binding of a function key action, so it can be rebound or unbound one by one.
+enum FunctionKeyLayer: String, Codable, CaseIterable, Sendable {
+    case off
+    case optionCommand
+    case command
+
+    /// The number row in F-key order: the key for F`n` is at index n - 1.
+    static let numberRow: [KeyCode] = [
+        .digit1, .digit2, .digit3, .digit4, .digit5, .digit6, .digit7, .digit8, .digit9, .digit0,
+        .minus, .equal,
+    ]
+
+    /// The chord held with a number row key; nil when the layer is off.
+    var modifiers: KeybindModifiers? {
+        switch self {
+        case .off: return nil
+        case .optionCommand: return [.option, .command]
+        case .command: return .command
+        }
+    }
+
+    var displayName: String {
+        guard let modifiers else { return String(localized: "Off", comment: "Function key layer: none") }
+        return "\(modifiers.symbolString)1 … \(modifiers.symbolString)="
+    }
+
+    /// One binding per function key, F1 first.
+    var bindings: [Keybind] {
+        guard let modifiers else { return [] }
+        return Self.numberRow.enumerated().compactMap { index, key in
+            KeybindAction.functionKey(index + 1).map { Keybind(key: key, modifiers: modifiers, action: $0) }
         }
     }
 }
