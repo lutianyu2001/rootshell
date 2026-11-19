@@ -678,6 +678,19 @@ struct WindowSettingsView: View {
                     .font(.caption)
             }
 
+            Section {
+                SettingDescribedToggle(
+                    Settings.Window.emptyWindowBackground,
+                    title: "Empty Window Background",
+                    description: "Shows the mark of your app icon and how to open a connection once every tab is closed.")
+                .themedRow()
+            } header: {
+                SettingGroupHeader("Empty Window", group: .window)
+            } footer: {
+                Text("A double tap or a long press on the empty window opens Connections either way.")
+                    .font(.caption)
+            }
+
             // EDR is meaningless on visionOS, so the Display section (and its HDR
             // brightness boost) is excluded there. The Full Screen / home-indicator
             // toggles and the Always On Display slider are iOS-only concepts, so they stay
