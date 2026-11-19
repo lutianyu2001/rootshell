@@ -65,7 +65,7 @@ extension Ghostty.TerminalView {
         // Clear any existing text selection by sending a click at the tap location.
         // Only for finger taps — mouse/trackpad clicks already send press/release
         // via touchesBegan/touchesEnded. Adding more here for mouse would double-count
-        // clicks (handleTap fires ~300ms after single click due to require(toFail:)).
+        // clicks (on Mac Catalyst the pointer still reaches this recognizer).
         if let surface = surface, !isMouseCaptured, lastContextMenuTriggerWasFinger {
             selectionWasTouchInitiated = false
             hideSelectionHandles(animated: false)
@@ -78,6 +78,20 @@ extension Ghostty.TerminalView {
     }
 
     #if !targetEnvironment(macCatalyst)
+    /// What handleTap does for a trackpad click, which the tap recognizer
+    /// no longer receives on iPad: dismiss the brightness HUD, focus this
+    /// split and refresh the keyboard traits. handleMouseDown already
+    /// focuses the split, except for a herdr endpoint pane.
+    func handlePointerClickFocus() {
+        if brightnessHUDHost != nil {
+            hideBrightnessHUD()
+        }
+        if herdrEndpointPane != nil {
+            NotificationCenter.default.post(name: .focusSplit, object: self)
+        }
+        reloadInputViews()
+    }
+
     @objc func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
         // Mouse/trackpad: don't show context menu — matches macOS Ghostty behavior.
         guard lastContextMenuTriggerWasFinger else { return }
@@ -2213,6 +2227,9 @@ extension Ghostty.TerminalView {
             // Check which button is pressed (iOS 13.4+)
             let isRightClick = event?.buttonMask.contains(.secondary) ?? false
             handleMouseDown(at: point, isRightClick: isRightClick)
+            #if !targetEnvironment(macCatalyst)
+            handlePointerClickFocus()
+            #endif
             return
         }
 
