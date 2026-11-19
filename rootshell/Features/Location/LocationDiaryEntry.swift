@@ -25,6 +25,8 @@ struct LocationDiaryEntry: Identifiable, Equatable {
     let id = UUID()
     let timestamp: Date
     let coordinate: CLLocationCoordinate2D
+    /// Radius of uncertainty in meters; negative when unknown.
+    var horizontalAccuracy: CLLocationAccuracy = -1
     var addressState: AddressState
     var retryCount: Int = 0
 
