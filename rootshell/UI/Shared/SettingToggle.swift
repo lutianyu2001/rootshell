@@ -12,6 +12,7 @@ struct SettingToggle: View {
     private let key: SettingKey<Bool>
     private let title: LocalizedStringKey
     private let icon: String?
+    private let info: LocalizedStringKey?
     private let inverted: Bool
     private let external: Binding<Bool>?
     private let onChange: ((Bool) -> Void)?
@@ -22,12 +23,14 @@ struct SettingToggle: View {
         _ key: SettingKey<Bool>,
         title: LocalizedStringKey,
         icon: String? = nil,
+        info: LocalizedStringKey? = nil,
         inverted: Bool = false,
         onChange: ((Bool) -> Void)? = nil
     ) {
         self.key = key
         self.title = title
         self.icon = icon
+        self.info = info
         self.inverted = inverted
         self.external = nil
         self.onChange = onChange
@@ -39,11 +42,13 @@ struct SettingToggle: View {
         _ key: SettingKey<Bool>,
         isOn: Binding<Bool>,
         title: LocalizedStringKey,
-        icon: String? = nil
+        icon: String? = nil,
+        info: LocalizedStringKey? = nil
     ) {
         self.key = key
         self.title = title
         self.icon = icon
+        self.info = info
         self.inverted = false
         self.external = isOn
         self.onChange = nil
@@ -70,6 +75,9 @@ struct SettingToggle: View {
                 }
                 Text(title)
                     .layoutPriority(1)
+                if let info {
+                    InfoPopoverButton(info)
+                }
                 SettingPinTag(key.erased)
             }
         }

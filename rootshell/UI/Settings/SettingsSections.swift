@@ -1305,7 +1305,8 @@ struct SettingsPrivacyContent: View {
                         }
                     ),
                     title: "Location Diary Mode",
-                    icon: "mappin.and.ellipse"
+                    icon: "mappin.and.ellipse",
+                    info: "Tracks your location so rootshell can keep SSH and Screen Sharing connections and long-running local tasks alive in the background. This increases battery use."
                 )
                 .themedRow()
 
