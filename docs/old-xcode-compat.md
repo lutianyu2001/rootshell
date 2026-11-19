@@ -208,6 +208,28 @@ Each run connects as a new random user (`tester<N>`): once a host and user are
 in the connection history, an `ssh://` URL takes the history path, which opens
 the connection sheet, and the test would wait for a click.
 
+## The picker reconnect test
+
+`scripts/old-xcode/picker-reconnect-test.sh <APP> <WORK_DIR> <ZMX> <KEY>`
+checks what a dropped connection comes back to after a zmx session was attached
+from the session picker. `<ZMX>` is a zmx binary for the Mac (a release
+archive's `zmx`), `<KEY>` a program that presses a key by its virtual key code
+(`key.swift` compiled; it needs Accessibility, as screenshots need Screen
+Recording, see below). `zmx_reconnect_sshd.py` runs every channel as a real
+process on the Mac, with zmx on `PATH` and its sockets under `<WORK_DIR>`, so
+the picker lists a real session (named `1`, standing in for Claude Code). The
+script presses 1 once discovery has run, which attaches it; the server waits
+for zmx to count the client, drops the TCP connection, and reports what the
+reconnected terminal channel runs. It exits 0 when that is an exec of
+`zmx attach` for the session and zmx counts a client again, 1 when it is a
+shell (the picker then opens again), 2 when no verdict arrived. It leaves
+`after-reconnect.png` in `<WORK_DIR>`.
+
+On 2026-11-18, with Xcode 26.3 and zmx 0.8.2-mod.1.1 on the Mac mini above,
+the build with `fix/picker-attach-resume-target` passed, and the same build
+with that commit reverted failed: the reconnected connection opened a shell
+and ran session discovery again.
+
 ## Working on the Mac over SSH
 
 - `screencapture` run over SSH needs Screen Recording for
