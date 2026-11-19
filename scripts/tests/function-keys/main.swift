@@ -48,5 +48,32 @@ for n in 1...12 {
            == Ghostty.TerminalView.functionKeySequence(n, modifiers: [.alt]), "Cmd-F\(n) == Alt-F\(n)")
 }
 
+// 6. Number row layer: the key under F n on a full keyboard sends F n, the
+//    same bytes tmux sends for F n (plain row of the oracle).
+let underF: [String] = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "="]
+for n in 1...12 { expect(KeybindAction.functionKey(n)?.functionKeyNumber == n, "action round trip F\(n)") }
+for n in [0, 13, -1] { expect(KeybindAction.functionKey(n) == nil, "no action for F\(n)") }
+var layerChords = Set<UInt8>()
+for layer in FunctionKeyLayer.allCases {
+    let bindings = layer.bindings
+    guard let mods = layer.modifiers else {
+        expect(bindings.isEmpty, "\(layer) binds nothing")
+        continue
+    }
+    // Shift would turn the number row into symbols, so no layer may use it.
+    expect(!mods.contains(.shift) && !mods.isEmpty, "\(layer) chord without Shift")
+    expect(layerChords.insert(mods.rawValue).inserted, "\(layer) chord is unique")
+    expect(bindings.map(\.key.rawValue) == underF, "\(layer) keys \(bindings.map(\.key.rawValue))")
+    for binding in bindings {
+        expect(binding.modifiers == mods, "\(layer) \(binding.key.rawValue) modifiers")
+        guard let col = underF.firstIndex(of: binding.key.rawValue),
+              let n = binding.action.functionKeyNumber else {
+            expect(false, "\(layer) \(binding.key.rawValue) has no F key"); continue
+        }
+        let got = Ghostty.TerminalView.functionKeySequence(n, modifiers: [])
+        expect(got == fields[col], "\(layer) \(binding.key.rawValue): \(show(got)) vs tmux \(show(fields[col]))")
+    }
+}
+
 print("\(checks - failures)/\(checks) checks passed")
 exit(failures == 0 ? 0 : 1)

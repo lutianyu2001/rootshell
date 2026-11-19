@@ -41,6 +41,8 @@ struct KeyboardShortcutsSettingsView: View {
                 Text("Optionally load keybinds from an external ghostty config file. The imported file lives at \(keybindManager.externalConfigShellPath), can be edited in place, and your in-app customizations still take priority.")
             }
 
+            functionKeyLayerSection
+
             // Category picker
             Section {
                 Picker("Category", selection: $selectedCategory) {
@@ -55,12 +57,16 @@ struct KeyboardShortcutsSettingsView: View {
             Section(selectedCategory.displayName) {
                 let categoryActions = KeybindAction.customizableActions
                     .filter { $0.category == selectedCategory }
-                    .sorted { $0.displayName < $1.displayName }
+                    // Numeric order, so Send F2 comes before Send F10.
+                    .sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
 
                 ForEach(categoryActions) { action in
                     let binding = keybindManager.keybind(for: action)
                     let isUnbound = keybindManager.isActionUnbound(action)
-                    KeybindRow(action: action, binding: binding, isUnbound: isUnbound) {
+                    KeybindRow(
+                        action: action, binding: binding, isUnbound: isUnbound,
+                        hasBaseBinding: keybindManager.hasBaseBinding(for: action)
+                    ) {
                         editingAction = action
                     }
                     .themedRow()
@@ -129,6 +135,27 @@ struct KeyboardShortcutsSettingsView: View {
             }
         } message: {
             Text("This will remove all your custom keyboard shortcuts and restore the defaults.")
+        }
+    }
+
+    // MARK: - Function Key Layer Section
+
+    private var functionKeyLayerSection: some View {
+        Section {
+            Picker("Number Row as F1-F12", selection: Binding(
+                get: { keybindManager.functionKeyLayer },
+                set: { keybindManager.functionKeyLayer = $0 }
+            )) {
+                ForEach(FunctionKeyLayer.allCases, id: \.self) { layer in
+                    Text(layer.displayName).tag(layer)
+                }
+            }
+            .themedRow()
+            .settingContextMenu(Settings.Keybinds.functionKeyLayer)
+        } header: {
+            Text("Function Keys")
+        } footer: {
+            Text("For keyboards without an F-key row: hold the chord and press 1 through 0 for F1-F10, - for F11 and = for F12. Sticky toolbar modifiers apply, so toolbar Shift then the chord with 6 sends Shift-F6. Each key can be rebound in the Function Keys category. With ⌘, the chords replace Select Tab and the font size shortcuts.")
         }
     }
 
@@ -349,6 +376,9 @@ struct KeybindRow: View {
     let action: KeybindAction
     let binding: Keybind?
     let isUnbound: Bool
+    /// False for an action with no shortcut until the user gives it one,
+    /// which then shows no tag instead of "Displaced".
+    var hasBaseBinding: Bool = true
     let onEdit: () -> Void
 
     var body: some View {
@@ -384,7 +414,7 @@ struct KeybindRow: View {
                             .padding(.vertical, 2)
                             .background(Color.red.opacity(0.1))
                             .cornerRadius(4)
-                    } else {
+                    } else if hasBaseBinding {
                         Text("Displaced")
                             .font(.caption2)
                             .foregroundColor(.secondary)

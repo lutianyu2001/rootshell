@@ -75,6 +75,10 @@ final class KeybindManager: ObservableObject {
         reloadBindings()
         hasFinishedInitialization = true
 
+        SettingsRefreshHub.shared.register(keys: [Settings.Keybinds.functionKeyLayer.name]) { [weak self] _ in
+            self?.reloadBindings()
+        }
+
         SettingsRefreshHub.shared.register(keys: [Settings.Keybinds.overrides.name]) { [weak self] _ in
             guard let self else { return }
             // A removed key clears overrides; loadUserOverrides leaves them untouched on nil
@@ -212,6 +216,28 @@ final class KeybindManager: ObservableObject {
             defaultBindings.append(Keybind(key: .escape, modifiers: .shift, action: .toggle_visor))
         }
         #endif
+    }
+
+    // MARK: - Function Key Layer
+
+    /// The chord that turns the number row into F1-F12. Its bindings sit
+    /// above the defaults and below the imported config and user overrides.
+    var functionKeyLayer: FunctionKeyLayer {
+        get { SettingsStore.shared.get(Settings.Keybinds.functionKeyLayer) }
+        set {
+            guard newValue != functionKeyLayer else { return }
+            SettingsStore.shared.set(Settings.Keybinds.functionKeyLayer, newValue)
+            reloadBindings()
+        }
+    }
+
+    /// Whether `action` has a binding before user overrides: a default, the
+    /// function key layer, or the imported config. An action without one
+    /// shows no shortcut by design rather than a displaced one.
+    func hasBaseBinding(for action: KeybindAction) -> Bool {
+        (!externalConfigClearsDefaults && defaultBindings.contains { $0.action == action })
+            || functionKeyLayer.bindings.contains { $0.action == action }
+            || externalConfigBindings.contains { $0.action == action }
     }
 
     // MARK: - Binding Lookup
@@ -662,6 +688,18 @@ final class KeybindManager: ObservableObject {
     private func reloadBindings() {
         // Start with defaults (unless external config used "keybind = clear")
         var bindings = externalConfigClearsDefaults ? [Keybind]() : defaultBindings
+
+        // The function key layer is an in-app choice, so "keybind = clear" in
+        // an imported config leaves it alone. It takes its chords from the
+        // defaults (⌘1 selects a tab unless the layer is ⌘), including a chord
+        // spelled with the key's shifted symbol: macOS matches ⌘+ on ⌘=.
+        for layerBinding in functionKeyLayer.bindings {
+            let symbolChord = layerBinding.sequence.first.flatMap {
+                KeyTrigger(key: $0.key, modifiers: $0.modifiers.union(.shift)).shiftedSymbolEquivalent
+            }.map { KeySequence(trigger: $0) }
+            bindings.removeAll { $0.sequence == layerBinding.sequence || $0.sequence == symbolChord }
+            bindings.append(layerBinding)
+        }
 
         // Apply external config overrides (middle priority)
         for extBinding in externalConfigBindings {
