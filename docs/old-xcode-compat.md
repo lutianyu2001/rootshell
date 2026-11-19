@@ -187,6 +187,25 @@ On 2026-11-18 all 23 keys matched. Ghostty writes a modified F3 as
 `CSI 13;<mods> ~`, not xterm's `CSI 1;<mods> R`, which reads like a cursor
 position report.
 
+## The function key layer test
+
+`scripts/old-xcode/function-key-layer-test.sh <APP> <WORK_DIR> <KEY> [<LAYER>]`
+checks the number row as F1-F12 with real key presses. `<KEY>` is the compiled
+`key.swift`, as for the picker reconnect test, and `<LAYER>` is `optionCommand`
+(the default) or `command`, written into the app's defaults for the run. It
+starts `keyecho_sshd.py`, connects, presses the chord with 1 through 0, - and =,
+and compares what arrived with F1-F12. It exits 0 when all twelve match.
+
+On 2026-11-19, with Xcode 26.3 on the Mac mini above, both layers matched all
+twelve keys, and a build without the layer received nothing. Before the View
+menu's font size items took their shortcuts from the keybindings, the `command`
+layer lost ⌘0, ⌘- and ⌘=: the items kept ⌘0, ⌘- and ⌘+, AppKit matches menu
+key equivalents before any `UIKeyCommand`, and it matches ⌘+ on ⌘=.
+
+Ctrl with - never reaches the terminal in the Catalyst app on this Mac, with or
+without the layer: plain ⌃- sends nothing, where `^_` was expected, and no menu
+item holds the chord. That is why the layer offers no Ctrl chord.
+
 ## The reconnect test
 
 `scripts/old-xcode/reconnect-test.sh <APP> <WORK_DIR>` checks that a dropped
