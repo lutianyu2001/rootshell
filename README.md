@@ -145,7 +145,7 @@ See the [herdr control mode guide](docs/herdr-control-mode.md) for setup, the fo
 - **File Manager** - Two-pane browser (⌘⇧U) for local folders, SSH and tssh hosts, and S3-compatible cloud storage, with a transfer queue, Quick Look previews, pasting files from the clipboard, and hardware keyboard navigation. **Browse as Root** switches a remote pane to sudo, with password and one-time-code prompts in a sheet
 - **Background SSH Tunnels** - Maintain port forwards without a terminal UI with auto-start on launch and byte transfer statistics
 - **Auto-start Multiplexer** - Automatically attach to or create a tmux, herdr or zmx session on connect
-- **Multiplexer Session Discovery** - After connecting, lists active tmux, zellij, herdr and zmx sessions with per-multiplexer detail and a live terminal preview
+- **Multiplexer Session Discovery** - After connecting, lists active tmux, zellij, herdr and zmx sessions with per-multiplexer detail and a live terminal preview. A session attached from the list is attached again when the connection drops and reconnects
 - **Host Shorthand (HSS)** - Pattern-based hostname expansion with YAML configuration
 - **Connection Health** - Real-time RTT and packet loss tracking with time series chart and negotiated cryptographic algorithm details
 - **Transfer to Nearby Device** - Hand off a live tssh session to another iCloud-paired device; the receiver reattaches to the same tsshd PTY with recent scrollback intact
