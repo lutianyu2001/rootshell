@@ -243,6 +243,12 @@ nonisolated extension Settings {
             "showRemotePorts", default: false, group: .window, policy: .localByDefault,
             configKey: "show-remote-ports",
             title: String(localized: "Show Remote Ports", comment: "Setting title"))
+        /// The mark of the selected app icon and a hint on how to open a connection, drawn on the
+        /// empty window once every tab is closed.
+        static let emptyWindowBackground = SettingKey(
+            "emptyWindowBackground", default: true, group: .window,
+            configKey: "empty-window-background",
+            title: String(localized: "Empty Window Background", comment: "Setting title"))
         static let confirmBeforeClosingPane = SettingKey(
             "confirmBeforeClosingPane", default: false, group: .window,
             configKey: "confirm-before-closing-pane",
@@ -282,6 +288,7 @@ nonisolated extension Settings {
             splitFocusBorderStyle.erased, splitFocusBorderColor.erased, splitFocusBorderCustomColor.erased,
             roundedPanes.erased,
             showRemotePorts.erased,
+            emptyWindowBackground.erased,
             confirmBeforeClosingPane.erased, confirmBeforeClosingTab.erased,
             lastWidth.erased, lastHeight.erased, lastOriginX.erased, lastOriginY.erased, lastHasOrigin.erased,
             titlebarLeadingInset.erased, quickSettingsHUDWidth.erased, quickSettingsHUDHeight.erased,

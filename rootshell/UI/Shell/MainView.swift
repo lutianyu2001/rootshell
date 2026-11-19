@@ -366,6 +366,7 @@ struct MainView: View {
     @Setting(Settings.Sidebar.pinned) var tabSidebarPinned
     /// Draws panes and docked columns as rounded cards; see PaneCardStyle.
     @Setting(Settings.Window.roundedPanes) var roundedPanes
+    @Setting(Settings.Window.emptyWindowBackground) var emptyWindowBackground
     @Setting(Settings.Window.showRemotePorts) var showRemotePorts
 
     /// When the floating (non-pinned) sidebar is open, auto-close it after the
@@ -523,10 +524,19 @@ struct MainView: View {
                             terminalAndSidebarContent(geometry: terminalGeometry, theme: resolvedTheme)
                         } else if ghosttyApp.readiness == .ready, terminals.isEmpty, !windowClosingAfterTabTransfer {
                             // Empty state - shown when all tabs are closed
-                            EmptyStateResponder(
-                                onNewTab: addNewTab,
-                                onNewLocalShell: handleNewTabCommand
-                            )
+                            ZStack {
+                                if emptyWindowBackground {
+                                    EmptyWindowBackground(
+                                        showsAddButton: showsHorizontalTabs && showsTabBarActions,
+                                        textColor: resolvedTheme.tabSecondaryText,
+                    isLightTheme: resolvedTheme.isLight
+                                    )
+                                }
+                                EmptyStateResponder(
+                                    onNewTab: addNewTab,
+                                    onNewLocalShell: handleNewTabCommand
+                                )
+                            }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else if ghosttyApp.readiness == .ready, terminals.isEmpty {
                             Color.clear

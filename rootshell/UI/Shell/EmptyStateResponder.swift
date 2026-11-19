@@ -3,7 +3,9 @@
 //  rootshell
 //
 //  A view displayed when all tabs are closed that can become first responder
-//  to handle keyboard shortcuts for creating new tabs.
+//  to handle keyboard shortcuts for creating new tabs. A double tap or a
+//  long press anywhere on it opens the connection sidebar, as the + button
+//  in the tab bar does.
 //
 
 import SwiftUI
@@ -36,6 +38,13 @@ final class EmptyStateView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
+
+        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap))
+        doubleTap.numberOfTapsRequired = 2
+        addGestureRecognizer(doubleTap)
+
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        addGestureRecognizer(longPress)
 
         // Automatically become first responder when added to window; skipped
         // while backgrounded, where the claim is pointless work. NOT a
@@ -85,6 +94,22 @@ final class EmptyStateView: UIView {
 
     @objc private func handleNewWindow() {
         NotificationCenter.default.post(name: .newWindow, object: nil)
+    }
+
+    // MARK: - Gestures
+
+    @objc private func handleDoubleTap() {
+        onNewTab?()
+    }
+
+    @objc private func handleLongPress(_ recognizer: UILongPressGestureRecognizer) {
+        // Fire once the hold is recognized, not on release, so the sidebar
+        // opens while the finger is still down, like a context menu.
+        guard recognizer.state == .began else { return }
+        #if !os(visionOS) && !targetEnvironment(macCatalyst)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
+        onNewTab?()
     }
 
     // MARK: - Menu Action Forwarding

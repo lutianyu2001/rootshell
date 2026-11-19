@@ -660,6 +660,8 @@ struct SettingsSearchEntry: Identifiable, Hashable {
                 keywords: ["split panes", "border", "border color", "focus"]),
             row("window-rounded-panes", String(localized: "Rounded Panes"), in: .window,
                 keywords: ["rounded", "corners", "cards", "gap", "split panes", "sidebar"]),
+            row("window-empty-window-background", String(localized: "Empty Window Background"), in: .window,
+                keywords: ["empty", "no tabs", "logo", "watermark", "hint", "new connection"]),
             row("window-full-screen", String(localized: "Full Screen"), in: .window,
                 keywords: ["status bar", "immersive"], available: isTouch),
             row("window-always-on", String(localized: "Always On Display"), in: .window,

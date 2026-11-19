@@ -207,6 +207,7 @@ enum QuickSettingsCatalog {
                 SettingsStore.shared.get(Settings.Window.splitFocusBorderColor) == .custom ? nil : String(localized: "Choose Custom Split Border Color first.")
             },
             toggle(Settings.Window.roundedPanes),
+            toggle(Settings.Window.emptyWindowBackground),
             toggle(Settings.Window.confirmBeforeClosingPane),
             toggle(Settings.Window.confirmBeforeClosingTab),
         ]

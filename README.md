@@ -78,6 +78,7 @@ brew install --cask rootshell
 - **Rounded Panes** - Optional style that draws panes, splits, and docked sidebars as separate rounded cards with lit edges and gaps between them; integrated tabs join the card and show progress
 - **Program Icons** - Tabs and the sidebar show the logo of the program in the focused pane: shells (bash, zsh, fish, Nushell, Elvish, xonsh), editors (Vim, Neovim, Helix, Emacs), monitors (htop, btop), and tools such as Git, Python, Ruby, Node.js, Cargo, Deno, Homebrew, and tmux, with category icons for everything else. Automatic in macOS local shells and tmux and herdr control mode; elsewhere, source the [bash/zsh](scripts/shell-integration-demo.sh) or [fish](scripts/shell-integration-demo.fish) shell integration demo
 - **Session Restoration** - Tabs, splits, themes, and connections restore automatically on launch
+- **Empty Window** - Once every tab is closed, double-tap or long-press the empty window to open Connections. The window shows the mark of your app icon as a faint watermark and a hint on how to open one; turn that off with Empty Window Background in Settings › Appearance › Window
 - **Nerd Fonts** - Multiple monospace Nerd Fonts built-in with full icon support
 - **Custom Font Import** - Import TTF and OTF fonts with live preview, auto-grouped by family, or choose monospace fonts installed by other apps
 - **Clickable Hyperlinks** - URLs in terminal output are interactive: Cmd+click or context menu to open
