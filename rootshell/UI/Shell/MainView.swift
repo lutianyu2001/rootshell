@@ -526,10 +526,18 @@ struct MainView: View {
                             // Empty state - shown when all tabs are closed
                             ZStack {
                                 if emptyWindowBackground {
+                                    #if targetEnvironment(macCatalyst)
+                                    // On the Mac only a terminal paints the theme's
+                                    // background, so without one the mark would lie
+                                    // on the bare window.
+                                    if let surface = resolvedTheme.terminalSurfaceBackground {
+                                        surface
+                                    }
+                                    #endif
                                     EmptyWindowBackground(
                                         showsAddButton: showsHorizontalTabs && showsTabBarActions,
                                         textColor: resolvedTheme.tabSecondaryText,
-                    isLightTheme: resolvedTheme.isLight
+                                        isLightTheme: resolvedTheme.isLight
                                     )
                                 }
                                 EmptyStateResponder(
