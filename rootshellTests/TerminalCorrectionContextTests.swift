@@ -316,4 +316,37 @@ final class TerminalCorrectionContextTests: XCTestCase {
         XCTAssertNil(context.dictation)
         XCTAssertEqual(context.document.utf16.count, 2048)
     }
+
+    // MARK: Third-party keyboard rewrites
+
+    private func rewrite(_ document: String, _ incoming: String) -> Context.KeyboardRewrite? {
+        Context.thirdPartyKeyboardRewrite(of: document, incoming: incoming)
+    }
+
+    func testKeyboardRewriteCorrectsTheTrailingWord() {
+        XCTAssertEqual(rewrite("git sttaus", "status"),
+                       Context.KeyboardRewrite(deleteCount: 4, text: "atus", document: "git status"))
+    }
+
+    func testKeyboardRewriteCompletesTheTrailingWordWithDelimiter() {
+        XCTAssertEqual(rewrite("cd ho", "home "),
+                       Context.KeyboardRewrite(deleteCount: 0, text: "me ", document: "cd home "))
+    }
+
+    func testKeyboardRewriteIgnoresSingleCharacters() {
+        XCTAssertNil(rewrite("ls", "a"))
+    }
+
+    func testKeyboardRewriteLeavesCJKPhraseCommitsAlone() {
+        XCTAssertNil(rewrite("你好", "世界"))
+        XCTAssertNil(rewrite("你好", "世界。"))
+        XCTAssertNil(rewrite("你好", "你们"))
+        XCTAssertNil(rewrite("こんにちは", "世界"))
+        XCTAssertNil(rewrite("안녕", "하세요"))
+    }
+
+    func testKeyboardRewriteDoesNotEraseCJKBeforeALatinWord() {
+        XCTAssertNil(rewrite("你好", "hello"))
+        XCTAssertNil(rewrite("hello", "世界"))
+    }
 }
