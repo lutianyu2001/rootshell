@@ -287,4 +287,70 @@ nonisolated struct TerminalCorrectionContext {
         boundDocument()
         return true
     }
+
+    // MARK: Third-party keyboard rewrites
+
+    struct KeyboardRewrite: Equatable {
+        /// Characters to erase from the end of the document.
+        let deleteCount: Int
+        /// Text to send after the erasures.
+        let text: String
+        /// The document once the rewrite is applied.
+        let document: String
+    }
+
+    /// Some third-party keyboard extensions resend the whole current word with
+    /// a correction applied instead of deleting and retyping it. Returns the
+    /// erasures and text that turn the document's trailing word into the
+    /// incoming one, or nil when the incoming text is a plain insertion.
+    ///
+    /// CJK input methods commit a whole phrase at a time and never resend the
+    /// previous one, and CJK text has no spaces to bound a word: treating the
+    /// commit as a rewrite would erase every phrase typed before it.
+    static func thirdPartyKeyboardRewrite(of document: String, incoming: String) -> KeyboardRewrite? {
+        guard incoming.count > 1 else { return nil }
+
+        let tokenStart = document.lastIndex(where: \.isWhitespace).map { document.index(after: $0) }
+            ?? document.startIndex
+        let currentToken = document[tokenStart...]
+
+        let (incomingToken, delimiter): (Substring, Substring)
+        if let lastWordScalar = incoming.unicodeScalars.lastIndex(where: CharacterSet.alphanumerics.contains) {
+            let tokenEnd = incoming.index(after: lastWordScalar)
+            (incomingToken, delimiter) = (incoming[..<tokenEnd], incoming[tokenEnd...])
+        } else {
+            (incomingToken, delimiter) = ("", incoming[...])
+        }
+        guard !incomingToken.contains(where: \.isWhitespace),
+              !containsCJK(currentToken), !containsCJK(incoming) else { return nil }
+
+        let prefixLength = zip(currentToken, incomingToken).prefix { $0 == $1 }.count
+        let deleteCount = currentToken.count - prefixLength
+        let text = String(incomingToken.dropFirst(prefixLength) + delimiter)
+        guard deleteCount > 0 || !text.isEmpty else { return nil }
+        return KeyboardRewrite(deleteCount: deleteCount, text: text,
+                               document: String(document[..<tokenStart] + incomingToken + delimiter))
+    }
+
+    /// CJK ideographs, kana, Bopomofo, Hangul, and CJK and fullwidth punctuation.
+    static func containsCJK<S: StringProtocol>(_ text: S) -> Bool {
+        text.unicodeScalars.contains { scalar in
+            switch scalar.value {
+            case 0x1100...0x11FF,      // Hangul Jamo
+                 0x2E80...0x303F,      // CJK radicals, Kangxi, CJK symbols and punctuation
+                 0x3040...0x33FF,      // kana, Bopomofo, Hangul compatibility jamo, CJK compatibility
+                 0x3400...0x4DBF,      // CJK unified ideographs extension A
+                 0x4E00...0x9FFF,      // CJK unified ideographs
+                 0xA960...0xA97F,      // Hangul Jamo extended A
+                 0xAC00...0xD7FF,      // Hangul syllables, Jamo extended B
+                 0xF900...0xFAFF,      // CJK compatibility ideographs
+                 0xFE30...0xFE4F,      // CJK compatibility forms
+                 0xFF00...0xFFEF,      // halfwidth and fullwidth forms
+                 0x20000...0x3FFFF:    // CJK extension B and beyond
+                return true
+            default:
+                return false
+            }
+        }
+    }
 }

@@ -61,56 +61,22 @@ extension Ghostty.TerminalView {
         return className.localizedCaseInsensitiveContains("extension")
     }
 
-    private func commonPrefixLength(_ lhs: String, _ rhs: String) -> Int {
-        zip(lhs, rhs).prefix { $0 == $1 }.count
-    }
-
-    private func trailingTokenRange(in text: String) -> Range<String.Index> {
-        if let lastWhitespace = text.lastIndex(where: \.isWhitespace) {
-            return text.index(after: lastWhitespace)..<text.endIndex
-        }
-        return text.startIndex..<text.endIndex
-    }
-
-    private func splitTrailingDelimiter(in text: String) -> (token: String, delimiter: String) {
-        guard let lastWordScalar = text.unicodeScalars.lastIndex(where: CharacterSet.alphanumerics.contains) else {
-            return ("", text)
-        }
-        let tokenEnd = text.index(after: lastWordScalar)
-        return (String(text[..<tokenEnd]), String(text[tokenEnd...]))
-    }
-
     func handleThirdPartyKeyboardInsert(_ incomingText: String) -> Bool {
         guard isLikelyThirdPartyKeyboard,
               markedTextString == nil,
-              incomingText.count > 1 else {
+              let rewrite = TerminalCorrectionContext.thirdPartyKeyboardRewrite(of: documentBuffer,
+                                                                              incoming: incomingText) else {
             return false
         }
 
-        let tokenRange = trailingTokenRange(in: documentBuffer)
-        let bufferPrefix = String(documentBuffer[..<tokenRange.lowerBound])
-        let currentToken = String(documentBuffer[tokenRange])
-
-        let (incomingToken, delimiter) = splitTrailingDelimiter(in: incomingText)
-        if incomingToken.contains(where: \.isWhitespace) {
-            return false
-        }
-
-        let prefixLength = commonPrefixLength(currentToken, incomingToken)
-        let deleteCount = currentToken.count - prefixLength
-        let replacementSuffix = String(incomingToken.dropFirst(prefixLength))
-        let emittedText = replacementSuffix + delimiter
-
-        guard deleteCount > 0 || !emittedText.isEmpty else { return false }
-
-        var payload = Data(repeating: 0x7F, count: deleteCount)
-        if let emittedData = emittedText.replacingOccurrences(of: "\n", with: "\r").data(using: .utf8) {
+        var payload = Data(repeating: 0x7F, count: rewrite.deleteCount)
+        if let emittedData = rewrite.text.replacingOccurrences(of: "\n", with: "\r").data(using: .utf8) {
             payload.append(emittedData)
         }
 
         NotificationCenter.default.post(name: .ghosttyDidReceiveInput, object: self)
         if !payload.isEmpty {
-            sendUserInput(payload, documentMutation: .legacyDocument(bufferPrefix + incomingToken + delimiter))
+            sendUserInput(payload, documentMutation: .legacyDocument(rewrite.document))
         }
 
         return true
