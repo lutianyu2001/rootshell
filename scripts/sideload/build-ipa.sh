@@ -12,6 +12,13 @@
 #
 # Package downloads authenticate from ~/.netrc when it has api.github.com: unauthenticated,
 # GitHub's API refuses (403) the binary targets' downloads once its rate limit is reached.
+#
+# The build number: CFBundleVersion of the app and of every extension it keeps is set to the number
+# of commits up to HEAD, which grows from one release to the next, so that AltStore and SideStore
+# offer each release as an update (they compare it when the version stays the same, as it does
+# between a sidestream fork's -mod.X.Y releases). It needs the whole history: a shallow clone
+# fails before building. IPA_BUILD_NUMBER, when set, is used instead (one to three integers
+# separated by dots).
 set -euo pipefail
 
 # Per project: the project, the scheme and the configuration that build the app for devices, and
@@ -42,6 +49,18 @@ XCODE_ARGS=(-project "$PROJECT" -scheme "$SCHEME" -configuration "$CONFIGURATION
 read -r -a EXTRA_SETTINGS <<< "${IPA_BUILD_SETTINGS:-}"
 
 cd "$ROOT"
+if [ -z "${IPA_BUILD_NUMBER:-}" ]; then
+  if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+    echo "a shallow clone cannot count its commits: check out with fetch-depth: 0, or set IPA_BUILD_NUMBER" >&2
+    exit 1
+  fi
+  IPA_BUILD_NUMBER=$(git rev-list --count HEAD)
+fi
+if ! printf '%s\n' "$IPA_BUILD_NUMBER" | grep -Eq '^[0-9]+(\.[0-9]+){0,2}$'; then
+  echo "IPA_BUILD_NUMBER is not one to three integers separated by dots: $IPA_BUILD_NUMBER" >&2
+  exit 2
+fi
+
 xcodebuild "${XCODE_ARGS[@]}" -derivedDataPath "$DD" -clonedSourcePackagesDirPath "$PKG" \
   CODE_SIGNING_ALLOWED=NO ${EXTRA_SETTINGS[@]+"${EXTRA_SETTINGS[@]}"} build
 
@@ -56,6 +75,11 @@ SIGNED=$STAGE/Payload/$APP_NAME.app
 for ext in ${DROP_EXTENSIONS[@]+"${DROP_EXTENSIONS[@]}"}; do
   rm -rf "$SIGNED/PlugIns/$ext.appex"
 done
+for plist in "$SIGNED/Info.plist" "$SIGNED"/PlugIns/*.appex/Info.plist "$SIGNED"/Extensions/*.appex/Info.plist; do
+  [ -f "$plist" ] || continue
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $IPA_BUILD_NUMBER" "$plist"
+done
+echo "CFBundleVersion $IPA_BUILD_NUMBER" >&2
 
 # Sign ad hoc with the entitlements the app asks for (an app group above all), filled in from the
 # build settings: SideStore reads them from the signature to know what to request when it

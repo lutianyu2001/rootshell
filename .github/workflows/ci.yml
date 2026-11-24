@@ -64,9 +64,13 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 120
     steps:
+      # The whole history, without old files' contents: build-ipa.sh counts the commits for the
+      # IPA's build number.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+          filter: blob:none
 
       # Unauthenticated, GitHub's API refuses (403) the Swift packages' binary downloads once the
       # runner's shared rate limit is used up; this run's read-only token lifts it.
