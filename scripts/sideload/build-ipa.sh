@@ -34,6 +34,14 @@ DROP_EXTENSIONS=(VPNTunnelExtension PushNotificationService)
 # <path inside the .app>=<entitlements file>.
 APP_ENTITLEMENTS=rootshell/Entitlements/AppStore.entitlements
 EXTENSION_ENTITLEMENTS=("PlugIns/SessionActivityWidgetExtension.appex=SessionActivityWidget/SessionActivityWidget.entitlements")
+# Per project: build settings (KEY=VALUE) that give the app an identity of its own, so that it
+# installs beside the official one rather than over it: its bundle identifiers and app groups,
+# through whatever setting the project derives them from. They go to the build and to the settings
+# the entitlements are filled from. Empty keeps the project's identity.
+IDENTITY_SETTINGS=(ROOTSHELL_ORG_IDENTIFIER=com.q0wkp)
+# Per project: the app's name on the home screen, to tell it from the official one. Empty keeps
+# the project's.
+DISPLAY_NAME=rootshell-test
 
 if [ $# -lt 2 ]; then
   echo "usage: $0 <DERIVED_DATA_DIR> <OUTPUT_IPA> [<PACKAGES_DIR>]" >&2
@@ -45,7 +53,8 @@ DD=$(cd "$1" && pwd)
 OUT=$(cd "$(dirname "$2")" && pwd)/$(basename "$2")
 PKG=${3:-$DD/packages}
 XCODE_ARGS=(-project "$PROJECT" -scheme "$SCHEME" -configuration "$CONFIGURATION"
-  -destination generic/platform=iOS -packageAuthorizationProvider netrc)
+  -destination generic/platform=iOS -packageAuthorizationProvider netrc
+  ${IDENTITY_SETTINGS[@]+"${IDENTITY_SETTINGS[@]}"})
 read -r -a EXTRA_SETTINGS <<< "${IPA_BUILD_SETTINGS:-}"
 
 cd "$ROOT"
@@ -80,6 +89,12 @@ for plist in "$SIGNED/Info.plist" "$SIGNED"/PlugIns/*.appex/Info.plist "$SIGNED"
   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $IPA_BUILD_NUMBER" "$plist"
 done
 echo "CFBundleVersion $IPA_BUILD_NUMBER" >&2
+if [ -n "$DISPLAY_NAME" ]; then
+  /usr/libexec/PlistBuddy -c "Delete :CFBundleDisplayName" "$SIGNED/Info.plist" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string $DISPLAY_NAME" "$SIGNED/Info.plist"
+fi
+plist_value() { /usr/libexec/PlistBuddy -c "Print :$1" "$SIGNED/Info.plist" 2>/dev/null || echo -; }
+echo "CFBundleIdentifier $(plist_value CFBundleIdentifier), CFBundleDisplayName $(plist_value CFBundleDisplayName)" >&2
 
 # Sign ad hoc with the entitlements the app asks for (an app group above all), filled in from the
 # build settings: SideStore reads them from the signature to know what to request when it
